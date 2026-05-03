@@ -1,43 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Danh sách uống thuốc</title>
+<title>DANH SÁCH UỐNG THUỐC</title>
 
 <style>
-body { font-family: Arial; padding:10px; background:#f5f6fa; }
-h2 { text-align:center; }
+body { font-family: Arial; padding: 20px; background: #f5f6fa; }
+h2 { text-align: center; }
 
 input, select {
-    width:140px;
-    padding:6px;
-    margin:3px;
+  padding: 6px;
+  margin: 5px;
+}
+
+button {
+  padding: 6px 12px;
+  cursor: pointer;
 }
 
 table {
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-    margin-top:10px;
-}
-
-th, td {
-    border:1px solid #ccc;
-    padding:6px;
-    text-align:center;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
 }
 
 th {
-    background:#0984e3;
-    color:white;
+  background: #1e73be;
+  color: white;
+  padding: 8px;
 }
 
-.ten { text-align:left; }
+td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}
 
-button { padding:5px 10px; margin:2px; }
+input[type="text"], input[type="number"] {
+  width: 90%;
+}
 
-.boxNha label{
-    margin-right:10px;
+input[type="date"] {
+  width: 140px;
 }
 </style>
 </head>
@@ -46,225 +50,159 @@ button { padding:5px 10px; margin:2px; }
 
 <h2>DANH SÁCH UỐNG THUỐC</h2>
 
-<div>
+<!-- FORM -->
 <input id="hoten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
 <input id="thuoc" placeholder="Thuốc">
-<input type="date" id="ngaytaikham">
+<input id="ngay" type="date">
 
 <button onclick="them()">Thêm</button>
-<button onclick="inDanhSach()">🖨️ In</button>
-</div>
+<button onclick="inDanhSach()">🖨 In</button>
 
 <br>
 
-<input id="timten" placeholder="🔍 Tìm tên..." onkeyup="timTen()">
+<input id="search" placeholder="🔍 Tìm tên..." onkeyup="loc()">
 
-<select id="locnha" onchange="locNha()">
-<option value="">🏠 Lọc theo nhà</option>
-<option value="1">Nhà 1</option>
-<option value="2">Nhà 2</option>
-<option value="3">Nhà 3</option>
-<option value="4">Nhà 4</option>
-<option value="5">Nhà 5</option>
-<option value="6">Nhà 6</option>
-<option value="7">Nhà 7</option>
-<option value="8">Nhà 8</option>
-<option value="9">Nhà 9</option>
+<select id="locnha" onchange="loc()">
+  <option value="">🏠 Lọc theo nhà</option>
+  <option>1</option><option>2</option><option>3</option>
+  <option>4</option><option>5</option><option>6</option>
+  <option>7</option><option>8</option><option>9</option>
 </select>
 
-<div class="boxNha">
-<b>Chọn nhà để in:</b><br>
-<label><input type="checkbox" class="chonNha" value="1">1</label>
-<label><input type="checkbox" class="chonNha" value="2">2</label>
-<label><input type="checkbox" class="chonNha" value="3">3</label>
-<label><input type="checkbox" class="chonNha" value="4">4</label>
-<label><input type="checkbox" class="chonNha" value="5">5</label>
-<label><input type="checkbox" class="chonNha" value="6">6</label>
-<label><input type="checkbox" class="chonNha" value="7">7</label>
-<label><input type="checkbox" class="chonNha" value="8">8</label>
-<label><input type="checkbox" class="chonNha" value="9">9</label>
-</div>
+<br>
 
-<table id="bang"></table>
+<b>Chọn nhà để in:</b><br>
+<div id="chonNha"></div>
+
+<table>
+<thead>
+<tr>
+<th>STT</th>
+<th>Họ tên</th>
+<th>Năm sinh</th>
+<th>Nhà</th>
+<th>Ngày tái khám</th>
+<th>Thuốc</th>
+</tr>
+</thead>
+<tbody id="data"></tbody>
+</table>
 
 <script>
-
 const API = "https://script.google.com/macros/s/AKfycbwj8PUcd0vq4LeLlZ5SCxLzQbV2lbfDFnq6ZWuqZ-JEcgbMskbyEzMPLK0Ub8qdJO_ljg/exec";
 
-// 🔥 FIX DATE
-function formatDate(d){
-    if(!d) return "";
-    let date = new Date(d);
-    if(isNaN(date)) return "";
+let rawData = [];
 
-    let y = date.getFullYear();
-    let m = String(date.getMonth()+1).padStart(2,'0');
-    let day = String(date.getDate()).padStart(2,'0');
-
-    return `${y}-${m}-${day}`;
+// format ngày chuẩn
+function formatDate(d) {
+  if (!d) return "";
+  const date = new Date(d);
+  return date.toISOString().split("T")[0];
 }
 
-
-
-function them(){
-    fetch(API,{
-        method:"POST",
-        body:JSON.stringify({
-            hoten:hoten.value,
-            namsinh:namsinh.value,
-            nha:nha.value,
-            thuoc:thuoc.value,
-            ngaytaikham:ngaytaikham.value
-        })
-    }).then(()=>{ clearForm(); load(); });
+// load dữ liệu
+async function load() {
+  const res = await fetch(API);
+  rawData = await res.json();
+  render(rawData);
 }
 
+// hiển thị bảng
+function render(data) {
+  let html = "";
 
-function load(){
-    fetch(API)
-    .then(res=>res.json())
-    .then(data=>{
-        let html = `
-        <tr>
-        <th>STT</th>
-        <th>Họ tên</th>
-        <th>Năm sinh</th>
-        <th>Nhà</th>
-        <th>Ngày tái khám</th>
-        <th>Thuốc</th>
-        <th>Sửa</th>
-        <th>Xóa</th>
-        </tr>
-        `;
+  data.forEach((row, i) => {
 
-        data.forEach((r,i)=>{
-            html += `
-            <tr>
-            <td>${i+1}</td>
-            <td class="ten"><input id="hoten_${i}" value="${r.hoten}"></td>
-            <td><input id="namsinh_${i}" value="${r.namsinh}"></td>
-            <td><input id="nha_${i}" value="${r.nha}"></td>
-            <td><input type="date" id="ngay_${i}" value="${formatDate(r.ngaytaikham)}"></td>
-            <td><input id="thuoc_${i}" value="${r.thuoc}"></td>
-            <td><button onclick="sua(${i})">💾</button></td>
-            <td><button onclick="xoa(${i})">❌</button></td>
-            </tr>
-            `;
-        });
+    const hoten = row.hoten;
+    const namsinh = row.namsinh;
+    const nha = row.nha;
+    const thuoc = row.thuoc;
+    const ngay = row.ngaytaikham;
 
-        bang.innerHTML = html;
-    });
-}
-
-
-function sua(i){
-    fetch(API,{
-        method:"POST",
-        body:JSON.stringify({
-            index:i,
-            hoten:document.getElementById("hoten_"+i).value,
-            namsinh:document.getElementById("namsinh_"+i).value,
-            nha:document.getElementById("nha_"+i).value,
-            thuoc:document.getElementById("thuoc_"+i).value,
-            ngaytaikham:document.getElementById("ngay_"+i).value
-        })
-    }).then(()=>load());
-}
-
-
-function xoa(i){
-    fetch(API,{
-        method:"POST",
-        body:JSON.stringify({delete:i})
-    }).then(()=>load());
-}
-
-
-function timTen(){
-    let key = timten.value.toLowerCase();
-    let rows = bang.querySelectorAll("tr");
-
-    rows.forEach((r,i)=>{
-        if(i==0) return;
-        let ten = r.cells[1].querySelector("input").value.toLowerCase();
-        r.style.display = ten.includes(key) ? "" : "none";
-    });
-}
-
-
-function locNha(){
-    let nha = locnha.value;
-    let rows = bang.querySelectorAll("tr");
-
-    rows.forEach((r,i)=>{
-        if(i==0) return;
-        let nharow = r.cells[3].querySelector("input").value;
-        r.style.display = (!nha || nharow==nha) ? "" : "none";
-    });
-}
-
-
-function inDanhSach(){
-    let checked = document.querySelectorAll(".chonNha:checked");
-    let selected = Array.from(checked).map(c => c.value);
-
-    let rows = document.querySelectorAll("#bang tr");
-
-    let html = `
-    <h2 style="text-align:center;">DANH SÁCH UỐNG THUỐC</h2>
-    <table border="1" style="width:100%; border-collapse:collapse;">
-    <tr>
-        <th>STT</th>
-        <th>Họ tên</th>
-        <th>Năm sinh</th>
-        <th>Nhà</th>
-        <th>Ngày tái khám</th>
-    </tr>
-    `;
-
-    let stt = 1;
-
-    rows.forEach((r,i)=>{
-        if(i==0) return;
-
-        let nha = r.cells[3].querySelector("input").value;
-        if(selected.length > 0 && !selected.includes(nha)) return;
-
-        let ten = r.cells[1].querySelector("input").value;
-        let ns = r.cells[2].querySelector("input").value;
-        let ngay = r.cells[4].querySelector("input").value;
-
-        html += `
-        <tr>
-        <td>${stt++}</td>
-        <td>${ten}</td>
-        <td>${ns}</td>
+    html += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${hoten}</td>
+        <td>${namsinh}</td>
         <td>${nha}</td>
-        <td>${ngay}</td>
-        </tr>
-        `;
-    });
+        <td>${formatDate(ngay)}</td>
+        <td>${thuoc}</td>
+      </tr>
+    `;
+  });
 
-    html += "</table>";
-
-    let w = window.open("");
-    w.document.write(html);
-    w.print();
+  document.getElementById("data").innerHTML = html;
 }
 
+// thêm dữ liệu
+async function them() {
+  const hoten = document.getElementById("hoten").value;
+  const namsinh = document.getElementById("namsinh").value;
+  const nha = document.getElementById("nha").value;
+  const thuoc = document.getElementById("thuoc").value;
+  const ngay = document.getElementById("ngay").value;
 
-function clearForm(){
-    hoten.value="";
-    namsinh.value="";
-    nha.value="";
-    thuoc.value="";
-    ngaytaikham.value="";
+  await fetch(API, {
+    method: "POST",
+    body: JSON.stringify({ hoten, namsinh, nha, thuoc, ngay })
+  });
+
+  load();
 }
 
+// tìm + lọc
+function loc() {
+  const s = document.getElementById("search").value.toLowerCase();
+  const nha = document.getElementById("locnha").value;
+
+  const filtered = rawData.filter(r =>
+    r.hoten.toLowerCase().includes(s) &&
+    (nha === "" || r.nha == nha)
+  );
+
+  render(filtered);
+}
+
+// tạo checkbox nhà
+function taoCheck() {
+  let html = "";
+  for (let i = 1; i <= 9; i++) {
+    html += `<label><input type="checkbox" value="${i}"> ${i}</label> `;
+  }
+  document.getElementById("chonNha").innerHTML = html;
+}
+
+// in
+function inDanhSach() {
+  const checked = [...document.querySelectorAll("#chonNha input:checked")].map(c=>c.value);
+
+  const data = rawData.filter(r =>
+    checked.length === 0 || checked.includes(String(r.nha))
+  );
+
+  let html = "<h3>DANH SÁCH</h3><table border=1><tr><th>STT</th><th>Họ tên</th><th>Năm sinh</th><th>Nhà</th><th>Ngày tái khám</th></tr>";
+
+  data.forEach((r,i)=>{
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${r.hoten}</td>
+      <td>${r.namsinh}</td>
+      <td>${r.nha}</td>
+      <td>${formatDate(r.ngaytaikham)}</td>
+    </tr>`;
+  });
+
+  html += "</table>";
+
+  const w = window.open("");
+  w.document.write(html);
+  w.print();
+}
+
+taoCheck();
 load();
-
 </script>
 
 </body>
