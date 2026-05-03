@@ -84,7 +84,7 @@ const API = "https://script.google.com/macros/s/AKfycbwj8PUcd0vq4LeLlZ5SCxLzQbV2
 
 let data = [];
 
-// format ngày chuẩn dd/mm/yyyy
+// FORMAT NGÀY CHUẨN
 function formatDate(d){
   if(!d) return "";
   let x = new Date(d);
@@ -97,14 +97,14 @@ function formatDate(d){
   return `${day}/${month}/${year}`;
 }
 
-// load dữ liệu
+// LOAD
 async function load(){
   let res = await fetch(API);
   data = await res.json();
   render();
 }
 
-// hiển thị
+// HIỂN THỊ
 function render(){
   let tim = document.getElementById("tim").value.toLowerCase();
   let loc = document.getElementById("locNha").value;
@@ -123,10 +123,13 @@ function render(){
       <td><input value="${r.hoten}" id="ht${i}"></td>
       <td><input value="${r.namsinh}" id="ns${i}"></td>
       <td><input value="${r.nha}" id="nha${i}"></td>
+
       <td>
         <input type="date" id="ngay${i}" value="${r.ngay || ""}">
       </td>
+
       <td><input value="${r.thuoc}" id="thuoc${i}"></td>
+
       <td><button onclick="luu(${i})">💾</button></td>
       <td><button onclick="xoa(${i})">❌</button></td>
     </tr>`;
@@ -135,7 +138,7 @@ function render(){
   document.getElementById("bang").innerHTML = html;
 }
 
-// thêm
+// THÊM
 async function them(){
   let obj = {
     hoten: hoten.value,
@@ -150,18 +153,17 @@ async function them(){
     body: JSON.stringify(obj)
   });
 
-  // reset
   hoten.value="";
   namsinh.value="";
   nha.value="";
   thuoc.value="";
   ngay.value="";
-  hoten.focus();
 
+  hoten.focus();
   load();
 }
 
-// lưu chỉnh sửa
+// SỬA
 async function luu(i){
   let obj = {
     index: i,
@@ -180,7 +182,7 @@ async function luu(i){
   load();
 }
 
-// xóa (FIX CHUẨN)
+// XÓA
 async function xoa(i){
   if(!confirm("Xóa dòng này?")) return;
 
@@ -195,7 +197,7 @@ async function xoa(i){
   load();
 }
 
-// checkbox nhà
+// CHECKBOX NHÀ
 function taoChonNha(){
   let html="";
   for(let i=1;i<=9;i++){
@@ -204,19 +206,38 @@ function taoChonNha(){
   document.getElementById("chonNha").innerHTML = html;
 }
 
-// in
+// IN (FIX GỌN + KHÔNG VIỀN TO)
 function inDanhSach(){
   let checked = document.querySelectorAll("#chonNha input:checked");
   let arr = [...checked].map(x=>x.value);
 
-  let html = "<h3>Danh sách</h3><table border=1><tr><th>STT</th><th>Họ tên</th><th>Năm sinh</th><th>Nhà</th><th>Ngày</th></tr>";
+  let html = `
+  <style>
+    body{font-family:Arial;padding:10px}
+    h3{text-align:center;margin-bottom:10px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #000;padding:6px;text-align:center}
+    th{background:#eee}
+  </style>
+
+  <h3>DANH SÁCH</h3>
+  <table>
+  <tr>
+    <th>STT</th>
+    <th>Họ tên</th>
+    <th>Năm sinh</th>
+    <th>Nhà</th>
+    <th>Ngày tái khám</th>
+  </tr>
+  `;
 
   let stt=1;
 
   data.forEach(r=>{
     if(arr.length && !arr.includes(r.nha)) return;
 
-    html += `<tr>
+    html += `
+    <tr>
       <td>${stt++}</td>
       <td>${r.hoten}</td>
       <td>${r.namsinh}</td>
@@ -232,6 +253,7 @@ function inDanhSach(){
   w.print();
 }
 
+// INIT
 taoChonNha();
 load();
 </script>
