@@ -14,7 +14,7 @@ input, select {
 }
 
 button {
-  padding: 6px 12px;
+  padding: 6px 10px;
   cursor: pointer;
 }
 
@@ -36,13 +36,15 @@ td {
   text-align: center;
 }
 
-input[type="text"], input[type="number"] {
-  width: 90%;
+.btn {
+  cursor: pointer;
+  padding: 5px 8px;
+  border: none;
 }
 
-input[type="date"] {
-  width: 150px;
-}
+.btn-save { background: #6c5ce7; color: white; }
+.btn-del { background: #ff4757; color: white; }
+
 </style>
 </head>
 
@@ -50,7 +52,6 @@ input[type="date"] {
 
 <h2>DANH SÁCH UỐNG THUỐC</h2>
 
-<!-- FORM -->
 <input id="hoten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
@@ -65,10 +66,10 @@ input[type="date"] {
 <input id="search" placeholder="🔍 Tìm tên..." onkeyup="loc()">
 
 <select id="locnha" onchange="loc()">
-  <option value="">🏠 Lọc theo nhà</option>
-  <option>1</option><option>2</option><option>3</option>
-  <option>4</option><option>5</option><option>6</option>
-  <option>7</option><option>8</option><option>9</option>
+<option value="">🏠 Lọc theo nhà</option>
+<option>1</option><option>2</option><option>3</option>
+<option>4</option><option>5</option><option>6</option>
+<option>7</option><option>8</option><option>9</option>
 </select>
 
 <br>
@@ -85,6 +86,8 @@ input[type="date"] {
 <th>Nhà</th>
 <th>Ngày tái khám</th>
 <th>Thuốc</th>
+<th>Sửa</th>
+<th>Xóa</th>
 </tr>
 </thead>
 <tbody id="data"></tbody>
@@ -92,118 +95,140 @@ input[type="date"] {
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbwj8PUcd0vq4LeLlZ5SCxLzQbV2lbfDFnq6ZWuqZ-JEcgbMskbyEzMPLK0Ub8qdJO_ljg/exec";
-
 let rawData = [];
 
-// format ngày chuẩn
-function formatDate(d) {
+// format yyyy-mm-dd (cho input)
+function formatDateInput(d){
   if (!d) return "";
-  const date = new Date(d);
-  return date.toISOString().split("T")[0];
+  return new Date(d).toISOString().split("T")[0];
 }
 
-// load dữ liệu
-async function load() {
+// format dd/mm/yyyy (hiển thị)
+function formatDateVN(d){
+  if (!d) return "";
+  const date = new Date(d);
+  return date.toLocaleDateString("vi-VN");
+}
+
+// load
+async function load(){
   const res = await fetch(API);
   rawData = await res.json();
   render(rawData);
 }
 
-// hiển thị bảng
-function render(data) {
+// render
+function render(data){
   let html = "";
 
-  data.forEach((row, i) => {
-
-    const hoten = row.hoten;
-    const namsinh = row.namsinh;
-    const nha = row.nha;
-    const thuoc = row.thuoc;
-    const ngay = row.ngaytaikham;
-
+  data.forEach((r,i)=>{
     html += `
-      <tr>
-        <td>${i+1}</td>
-        <td><input value="${hoten}"></td>
-        <td><input value="${namsinh}"></td>
-        <td><input value="${nha}"></td>
-        <td><input type="date" value="${formatDate(ngay)}"></td>
-        <td><input value="${thuoc}"></td>
-      </tr>
-    `;
+    <tr>
+      <td>${i+1}</td>
+      <td><input id="ten${i}" value="${r.hoten}"></td>
+      <td><input id="ns${i}" value="${r.namsinh}"></td>
+      <td><input id="nha${i}" value="${r.nha}"></td>
+      <td>
+        <input type="date" id="ngay${i}" value="${formatDateInput(r.ngaytaikham)}">
+        <div style="font-size:12px;color:gray">${formatDateVN(r.ngaytaikham)}</div>
+      </td>
+      <td><input id="thuoc${i}" value="${r.thuoc}"></td>
+      <td><button class="btn btn-save" onclick="sua(${i})">💾</button></td>
+      <td><button class="btn btn-del" onclick="xoa(${i})">❌</button></td>
+    </tr>`;
   });
 
   document.getElementById("data").innerHTML = html;
 }
 
-// thêm dữ liệu
-async function them() {
-  const hoten = document.getElementById("hoten").value;
-  const namsinh = document.getElementById("namsinh").value;
-  const nha = document.getElementById("nha").value;
-  const thuoc = document.getElementById("thuoc").value;
-  const ngay = document.getElementById("ngay").value;
+// thêm
+async function them(){
+  const data = {
+    hoten: hoten.value,
+    namsinh: namsinh.value,
+    nha: nha.value,
+    thuoc: thuoc.value,
+    ngay: ngay.value
+  };
 
-  await fetch(API, {
-    method: "POST",
-    body: JSON.stringify({ hoten, namsinh, nha, thuoc, ngay })
+  await fetch(API,{method:"POST",body:JSON.stringify(data)});
+  load();
+}
+
+// sửa
+async function sua(i){
+  const data = {
+    hoten: document.getElementById("ten"+i).value,
+    namsinh: document.getElementById("ns"+i).value,
+    nha: document.getElementById("nha"+i).value,
+    thuoc: document.getElementById("thuoc"+i).value,
+    ngay: document.getElementById("ngay"+i).value,
+    index: i
+  };
+
+  await fetch(API,{
+    method:"PUT",
+    body: JSON.stringify(data)
   });
-
-  // reset form
-  document.getElementById("hoten").value = "";
-  document.getElementById("namsinh").value = "";
-  document.getElementById("nha").value = "";
-  document.getElementById("thuoc").value = "";
-  document.getElementById("ngay").value = "";
 
   load();
 }
 
-// tìm + lọc
-function loc() {
-  const s = document.getElementById("search").value.toLowerCase();
-  const nha = document.getElementById("locnha").value;
+// xóa
+async function xoa(i){
+  if(!confirm("Xóa dòng này?")) return;
 
-  const filtered = rawData.filter(r =>
+  await fetch(API,{
+    method:"DELETE",
+    body: JSON.stringify({index:i})
+  });
+
+  load();
+}
+
+// lọc
+function loc(){
+  const s = search.value.toLowerCase();
+  const n = locnha.value;
+
+  const f = rawData.filter(r =>
     r.hoten.toLowerCase().includes(s) &&
-    (nha === "" || r.nha == nha)
+    (n=="" || r.nha==n)
   );
 
-  render(filtered);
+  render(f);
 }
 
-// tạo checkbox nhà
-function taoCheck() {
-  let html = "";
-  for (let i = 1; i <= 9; i++) {
-    html += `<label><input type="checkbox" value="${i}"> ${i}</label> `;
+// checkbox
+function taoCheck(){
+  let html="";
+  for(let i=1;i<=9;i++){
+    html+=`<label><input type="checkbox" value="${i}"> ${i}</label> `;
   }
-  document.getElementById("chonNha").innerHTML = html;
+  chonNha.innerHTML=html;
 }
 
-// in danh sách
-function inDanhSach() {
-  const checked = [...document.querySelectorAll("#chonNha input:checked")].map(c=>c.value);
+// in
+function inDanhSach(){
+  const checked=[...document.querySelectorAll("#chonNha input:checked")].map(c=>c.value);
 
-  const data = rawData.filter(r =>
-    checked.length === 0 || checked.includes(String(r.nha))
-  );
+  const data=rawData.filter(r=>checked.length==0||checked.includes(String(r.nha)));
 
-  let html = "<h3>DANH SÁCH TÁI KHÁM</h3><table border=1><tr><th>STT</th><th>Họ tên</th><th>Năm sinh</th><th>Nhà</th><th>Ngày tái khám</th></tr>";
+  let html="<h3>DANH SÁCH</h3><table border=1><tr><th>STT</th><th>Họ tên</th><th>Năm sinh</th><th>Nhà</th><th>Ngày tái khám</th></tr>";
 
   data.forEach((r,i)=>{
-    html += `<tr>
-      <td>${i+1}</td>
-      <td>${r.hoten}</td>
-      <td>${r.namsinh}</td>
-      <td>${r.nha}</td>
-      <td>${formatDate(r.ngaytaikham)}</td>
+    html+=`<tr>
+    <td>${i+1}</td>
+    <td>${r.hoten}</td>
+    <td>${r.namsinh}</td>
+    <td>${r.nha}</td>
+    <td>${formatDateVN(r.ngaytaikham)}</td>
     </tr>`;
   });
 
-  html += "</table>";
+  html+="</table>";
 
-  const w = window.open("");
+  const w=window.open("");
   w.document.write(html);
   w.print();
 }
