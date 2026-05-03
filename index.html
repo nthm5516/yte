@@ -1,50 +1,37 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>DANH SÁCH UỐNG THUỐC</title>
 
 <style>
-body { font-family: Arial; padding: 20px; background: #f5f6fa; }
-h2 { text-align: center; }
+body{font-family:Arial;background:#f5f6fa;padding:20px}
+h2{text-align:center}
 
-input, select {
-  padding: 6px;
-  margin: 5px;
+input,select,button{
+  padding:8px;
+  margin:5px;
 }
 
-button {
-  padding: 6px 10px;
-  cursor: pointer;
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
+th{
+  background:#2e75b6;
+  color:white;
+  padding:10px;
 }
 
-th {
-  background: #1e73be;
-  color: white;
-  padding: 8px;
+td{
+  border:1px solid #ccc;
+  padding:5px;
+  text-align:center;
 }
 
-td {
-  border: 1px solid #ccc;
-  padding: 6px;
-  text-align: center;
-}
-
-.btn {
-  cursor: pointer;
-  padding: 5px 8px;
-  border: none;
-}
-
-.btn-save { background: #6c5ce7; color: white; }
-.btn-del { background: #ff4757; color: white; }
-
+button{cursor:pointer}
 </style>
 </head>
 
@@ -52,31 +39,30 @@ td {
 
 <h2>DANH SÁCH UỐNG THUỐC</h2>
 
+<!-- FORM -->
 <input id="hoten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
 <input id="thuoc" placeholder="Thuốc">
 <input id="ngay" type="date">
-
 <button onclick="them()">Thêm</button>
 <button onclick="inDanhSach()">🖨 In</button>
 
 <br>
 
-<input id="search" placeholder="🔍 Tìm tên..." onkeyup="loc()">
+<input id="tim" placeholder="🔍 Tìm tên..." oninput="render()">
 
-<select id="locnha" onchange="loc()">
-<option value="">🏠 Lọc theo nhà</option>
-<option>1</option><option>2</option><option>3</option>
-<option>4</option><option>5</option><option>6</option>
-<option>7</option><option>8</option><option>9</option>
+<select id="locNha" onchange="render()">
+  <option value="">🏠 Lọc theo nhà</option>
+  <option>1</option><option>2</option><option>3</option>
+  <option>4</option><option>5</option><option>6</option>
+  <option>7</option><option>8</option><option>9</option>
 </select>
 
-<br>
-
-<b>Chọn nhà để in:</b><br>
+<br><b>Chọn nhà để in:</b><br>
 <div id="chonNha"></div>
 
+<!-- BẢNG -->
 <table>
 <thead>
 <tr>
@@ -90,60 +76,69 @@ td {
 <th>Xóa</th>
 </tr>
 </thead>
-<tbody id="data"></tbody>
+
+<tbody id="bang"></tbody>
 </table>
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbwj8PUcd0vq4LeLlZ5SCxLzQbV2lbfDFnq6ZWuqZ-JEcgbMskbyEzMPLK0Ub8qdJO_ljg/exec";
-let rawData = [];
 
-// format yyyy-mm-dd (cho input)
-function formatDateInput(d){
-  if (!d) return "";
-  return new Date(d).toISOString().split("T")[0];
+let data = [];
+
+// format yyyy-mm-dd -> dd/mm/yyyy
+function formatDate(d){
+  if(!d) return "";
+  let x = new Date(d);
+  let day = ("0"+x.getDate()).slice(-2);
+  let month = ("0"+(x.getMonth()+1)).slice(-2);
+  let year = x.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
-// format dd/mm/yyyy (hiển thị)
-function formatDateVN(d){
-  if (!d) return "";
-  const date = new Date(d);
-  return date.toLocaleDateString("vi-VN");
-}
-
-// load
+// load dữ liệu
 async function load(){
-  const res = await fetch(API);
-  rawData = await res.json();
-  render(rawData);
+  let res = await fetch(API);
+  data = await res.json();
+  render();
 }
 
-// render
-function render(data){
+// hiển thị bảng
+function render(){
+  let tim = document.getElementById("tim").value.toLowerCase();
+  let loc = document.getElementById("locNha").value;
+
   let html = "";
+  let stt = 1;
 
   data.forEach((r,i)=>{
+    if(tim && !r.hoten.toLowerCase().includes(tim)) return;
+    if(loc && r.nha != loc) return;
+
     html += `
     <tr>
-      <td>${i+1}</td>
-      <td><input id="ten${i}" value="${r.hoten}"></td>
-      <td><input id="ns${i}" value="${r.namsinh}"></td>
-      <td><input id="nha${i}" value="${r.nha}"></td>
-      <td>
-        <input type="date" id="ngay${i}" value="${formatDateInput(r.ngaytaikham)}">
-        <div style="font-size:12px;color:gray">${formatDateVN(r.ngaytaikham)}</div>
-      </td>
-      <td><input id="thuoc${i}" value="${r.thuoc}"></td>
-      <td><button class="btn btn-save" onclick="sua(${i})">💾</button></td>
-      <td><button class="btn btn-del" onclick="xoa(${i})">❌</button></td>
+      <td>${stt++}</td>
+      <td>${r.hoten}</td>
+      <td>${r.namsinh}</td>
+      <td>${r.nha}</td>
+      <td>${formatDate(r.ngay)}</td>
+      <td>${r.thuoc}</td>
+      <td><button onclick="sua(${i})">💾</button></td>
+      <td><button onclick="xoa(${i})">❌</button></td>
     </tr>`;
   });
 
-  document.getElementById("data").innerHTML = html;
+  document.getElementById("bang").innerHTML = html;
 }
 
-// thêm
+// thêm dữ liệu
 async function them(){
-  const data = {
+  const hoten = document.getElementById("hoten");
+  const namsinh = document.getElementById("namsinh");
+  const nha = document.getElementById("nha");
+  const thuoc = document.getElementById("thuoc");
+  const ngay = document.getElementById("ngay");
+
+  let obj = {
     hoten: hoten.value,
     namsinh: namsinh.value,
     nha: nha.value,
@@ -151,89 +146,82 @@ async function them(){
     ngay: ngay.value
   };
 
-  await fetch(API,{method:"POST",body:JSON.stringify(data)});
-  load();
-}
-
-// sửa
-async function sua(i){
-  const data = {
-    hoten: document.getElementById("ten"+i).value,
-    namsinh: document.getElementById("ns"+i).value,
-    nha: document.getElementById("nha"+i).value,
-    thuoc: document.getElementById("thuoc"+i).value,
-    ngay: document.getElementById("ngay"+i).value,
-    index: i
-  };
-
   await fetch(API,{
-    method:"PUT",
-    body: JSON.stringify(data)
+    method:"POST",
+    body: JSON.stringify(obj)
   });
+
+  // reset form
+  hoten.value="";
+  namsinh.value="";
+  nha.value="";
+  thuoc.value="";
+  ngay.value="";
+
+  hoten.focus();
 
   load();
 }
 
 // xóa
 async function xoa(i){
-  if(!confirm("Xóa dòng này?")) return;
-
   await fetch(API,{
-    method:"DELETE",
-    body: JSON.stringify({index:i})
+    method:"POST",
+    body: JSON.stringify({xoa:i})
   });
-
   load();
 }
 
-// lọc
-function loc(){
-  const s = search.value.toLowerCase();
-  const n = locnha.value;
+// sửa (demo đơn giản)
+async function sua(i){
+  let r = data[i];
 
-  const f = rawData.filter(r =>
-    r.hoten.toLowerCase().includes(s) &&
-    (n=="" || r.nha==n)
-  );
-
-  render(f);
+  document.getElementById("hoten").value = r.hoten;
+  document.getElementById("namsinh").value = r.namsinh;
+  document.getElementById("nha").value = r.nha;
+  document.getElementById("thuoc").value = r.thuoc;
+  document.getElementById("ngay").value = r.ngay;
 }
 
-// checkbox
-function taoCheck(){
+// tạo checkbox nhà
+function taoChonNha(){
   let html="";
   for(let i=1;i<=9;i++){
-    html+=`<label><input type="checkbox" value="${i}"> ${i}</label> `;
+    html += `<label><input type="checkbox" value="${i}"> ${i}</label> `;
   }
-  chonNha.innerHTML=html;
+  document.getElementById("chonNha").innerHTML = html;
 }
 
 // in
 function inDanhSach(){
-  const checked=[...document.querySelectorAll("#chonNha input:checked")].map(c=>c.value);
+  let checked = document.querySelectorAll("#chonNha input:checked");
+  let arr = [...checked].map(x=>x.value);
 
-  const data=rawData.filter(r=>checked.length==0||checked.includes(String(r.nha)));
+  let html = "<h3>Danh sách</h3><table border=1><tr><th>STT</th><th>Họ tên</th><th>Năm sinh</th><th>Nhà</th><th>Ngày</th></tr>";
 
-  let html="<h3>DANH SÁCH</h3><table border=1><tr><th>STT</th><th>Họ tên</th><th>Năm sinh</th><th>Nhà</th><th>Ngày tái khám</th></tr>";
+  let stt=1;
 
-  data.forEach((r,i)=>{
-    html+=`<tr>
-    <td>${i+1}</td>
-    <td>${r.hoten}</td>
-    <td>${r.namsinh}</td>
-    <td>${r.nha}</td>
-    <td>${formatDateVN(r.ngaytaikham)}</td>
+  data.forEach(r=>{
+    if(arr.length && !arr.includes(r.nha)) return;
+
+    html += `<tr>
+      <td>${stt++}</td>
+      <td>${r.hoten}</td>
+      <td>${r.namsinh}</td>
+      <td>${r.nha}</td>
+      <td>${formatDate(r.ngay)}</td>
     </tr>`;
   });
 
-  html+="</table>";
+  html += "</table>";
 
-  const w=window.open("");
+  let w = window.open("");
   w.document.write(html);
   w.print();
 }
 
-taoCheck();
+// init
+taoChonNha();
 load();
 </script>
 
