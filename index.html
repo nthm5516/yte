@@ -43,10 +43,6 @@ th {
     text-align: left;
 }
 
-.ngayvang {
-    background: #ffeaa7;
-}
-
 button {
     padding: 5px 10px;
     margin: 2px;
@@ -59,27 +55,29 @@ button {
 
 <h2>DANH SÁCH UỐNG THUỐC</h2>
 
-<!-- FORM NHẬP -->
+<!-- FORM -->
 <div>
 <input id="hoten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
 <input id="thuoc" placeholder="Thuốc">
 <input type="date" id="ngaytaikham">
+
 <button onclick="them()">Thêm</button>
+<button onclick="inDanhSach()">🖨️ In</button>
 </div>
 
-<!-- TÌM -->
 <br>
+
 <input id="timten" placeholder="🔍 Tìm tên..." onkeyup="timTen()">
 
-<!-- BẢNG -->
+<!-- TABLE -->
 <table id="bang"></table>
 
 <script>
 
-// 🔥 DÁN LINK GOOGLE SCRIPT VÀO ĐÂY
-const API = "https://script.google.com/macros/s/AKfycbzZm6qVxSOxjxW6dk3qlZhd1tX5jNFHD0pRwwMLArd2jW1UDgCHRX3x9KiVBbA3zaGK-w/exec";
+// 🔥 DÁN LINK GOOGLE SCRIPT
+const API = "DÁN_LINK_API_CỦA_CHỊ_VÀO_ĐÂY";
 
 
 // ===== THÊM =====
@@ -119,8 +117,6 @@ function load(){
         `;
 
         data.forEach((r,i)=>{
-            let vang = r.ngaytaikham ? "ngayvang" : "";
-
             html += `
             <tr>
             <td>${i+1}</td>
@@ -138,7 +134,7 @@ function load(){
             </td>
 
             <td>
-                <input type="date" id="ngay_${i}" value="${r.ngaytaikham}" class="${vang}">
+                <input type="date" id="ngay_${i}" value="${r.ngaytaikham}">
             </td>
 
             <td>
@@ -201,7 +197,52 @@ function timTen(){
 }
 
 
-// ===== CLEAR FORM =====
+// ===== IN (CHỈ CÁC CỘT YÊU CẦU) =====
+function inDanhSach(){
+
+    let rows = document.querySelectorAll("#bang tr");
+
+    let html = `
+    <h2 style="text-align:center;">DANH SÁCH UỐNG THUỐC</h2>
+    <table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
+    <tr>
+        <th>STT</th>
+        <th>Họ tên</th>
+        <th>Năm sinh</th>
+        <th>Nhà</th>
+        <th>Ngày tái khám</th>
+    </tr>
+    `;
+
+    rows.forEach((r,i)=>{
+        if(i==0) return;
+
+        let stt = i;
+        let ten = r.cells[1].querySelector("input").value;
+        let ns = r.cells[2].querySelector("input").value;
+        let nha = r.cells[3].querySelector("input").value;
+        let ngay = r.cells[4].querySelector("input").value;
+
+        html += `
+        <tr>
+        <td>${stt}</td>
+        <td>${ten}</td>
+        <td>${ns}</td>
+        <td>${nha}</td>
+        <td>${ngay}</td>
+        </tr>
+        `;
+    });
+
+    html += "</table>";
+
+    let w = window.open("");
+    w.document.write(html);
+    w.print();
+}
+
+
+// ===== CLEAR =====
 function clearForm(){
     hoten.value="";
     namsinh.value="";
