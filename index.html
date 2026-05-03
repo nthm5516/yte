@@ -5,50 +5,37 @@
 <title>Danh sách uống thuốc</title>
 
 <style>
-body {
-    font-family: Arial;
-    padding: 10px;
-    background: #f5f6fa;
-}
+body { font-family: Arial; padding:10px; background:#f5f6fa; }
+h2 { text-align:center; }
 
-h2 {
-    text-align: center;
-}
-
-input {
-    width: 140px;
-    padding: 6px;
-    margin: 3px;
+input, select {
+    width:140px;
+    padding:6px;
+    margin:3px;
 }
 
 table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    margin-top: 10px;
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    margin-top:10px;
 }
 
 th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-    text-align: center;
+    border:1px solid #ccc;
+    padding:6px;
+    text-align:center;
 }
 
 th {
-    background: #0984e3;
-    color: white;
+    background:#0984e3;
+    color:white;
 }
 
-.ten {
-    text-align: left;
-}
+.ten { text-align:left; }
 
-button {
-    padding: 5px 10px;
-    margin: 2px;
-}
+button { padding:5px 10px; margin:2px; }
 </style>
-
 </head>
 
 <body>
@@ -69,15 +56,29 @@ button {
 
 <br>
 
+<!-- TÌM -->
 <input id="timten" placeholder="🔍 Tìm tên..." onkeyup="timTen()">
+
+<!-- LỌC NHÀ -->
+<select id="locnha" onchange="locNha()">
+<option value="">🏠 Lọc theo nhà</option>
+<option value="1">Nhà 1</option>
+<option value="2">Nhà 2</option>
+<option value="3">Nhà 3</option>
+<option value="4">Nhà 4</option>
+<option value="5">Nhà 5</option>
+<option value="6">Nhà 6</option>
+<option value="7">Nhà 7</option>
+<option value="8">Nhà 8</option>
+<option value="9">Nhà 9</option>
+</select>
 
 <!-- TABLE -->
 <table id="bang"></table>
 
 <script>
 
-// 🔥 DÁN LINK GOOGLE SCRIPT
-const API = "https://script.google.com/macros/s/AKfycbzZm6qVxSOxjxW6dk3qlZhd1tX5jNFHD0pRwwMLArd2jW1UDgCHRX3x9KiVBbA3zaGK-w/exec";
+const API = "DÁN_LINK_API_CỦA_CHỊ";
 
 
 // ===== THÊM =====
@@ -91,10 +92,7 @@ function them(){
             thuoc:thuoc.value,
             ngaytaikham:ngaytaikham.value
         })
-    }).then(()=>{
-        clearForm();
-        load();
-    });
+    }).then(()=>{ clearForm(); load(); });
 }
 
 
@@ -120,34 +118,13 @@ function load(){
             html += `
             <tr>
             <td>${i+1}</td>
-
-            <td class="ten">
-                <input id="hoten_${i}" value="${r.hoten}">
-            </td>
-
-            <td>
-                <input id="namsinh_${i}" value="${r.namsinh}">
-            </td>
-
-            <td>
-                <input id="nha_${i}" value="${r.nha}">
-            </td>
-
-            <td>
-                <input type="date" id="ngay_${i}" value="${r.ngaytaikham}">
-            </td>
-
-            <td>
-                <input id="thuoc_${i}" value="${r.thuoc}">
-            </td>
-
-            <td>
-                <button onclick="sua(${i})">💾</button>
-            </td>
-
-            <td>
-                <button onclick="xoa(${i})">❌</button>
-            </td>
+            <td class="ten"><input id="hoten_${i}" value="${r.hoten}"></td>
+            <td><input id="namsinh_${i}" value="${r.namsinh}"></td>
+            <td><input id="nha_${i}" value="${r.nha}"></td>
+            <td><input type="date" id="ngay_${i}" value="${r.ngaytaikham}"></td>
+            <td><input id="thuoc_${i}" value="${r.thuoc}"></td>
+            <td><button onclick="sua(${i})">💾</button></td>
+            <td><button onclick="xoa(${i})">❌</button></td>
             </tr>
             `;
         });
@@ -175,12 +152,10 @@ function sua(i){
 
 // ===== XÓA =====
 function xoa(i){
-    if(confirm("Xóa dòng này?")){
-        fetch(API,{
-            method:"POST",
-            body:JSON.stringify({delete:i})
-        }).then(()=>load());
-    }
+    fetch(API,{
+        method:"POST",
+        body:JSON.stringify({delete:i})
+    }).then(()=>load());
 }
 
 
@@ -197,14 +172,26 @@ function timTen(){
 }
 
 
-// ===== IN (CHỈ CÁC CỘT YÊU CẦU) =====
-function inDanhSach(){
+// ===== LỌC NHÀ =====
+function locNha(){
+    let nha = locnha.value;
+    let rows = bang.querySelectorAll("tr");
 
+    rows.forEach((r,i)=>{
+        if(i==0) return;
+        let nharow = r.cells[3].querySelector("input").value;
+        r.style.display = (!nha || nharow==nha) ? "" : "none";
+    });
+}
+
+
+// ===== IN =====
+function inDanhSach(){
     let rows = document.querySelectorAll("#bang tr");
 
     let html = `
     <h2 style="text-align:center;">DANH SÁCH UỐNG THUỐC</h2>
-    <table border="1" style="width:100%; border-collapse:collapse; text-align:center;">
+    <table border="1" style="width:100%; border-collapse:collapse;">
     <tr>
         <th>STT</th>
         <th>Họ tên</th>
@@ -217,26 +204,24 @@ function inDanhSach(){
     rows.forEach((r,i)=>{
         if(i==0) return;
 
-        let stt = i;
-        let ten = r.cells[1].querySelector("input").value;
-        let ns = r.cells[2].querySelector("input").value;
-        let nha = r.cells[3].querySelector("input").value;
-        let ngay = r.cells[4].querySelector("input").value;
+        let stt=i;
+        let ten=r.cells[1].querySelector("input").value;
+        let ns=r.cells[2].querySelector("input").value;
+        let nha=r.cells[3].querySelector("input").value;
+        let ngay=r.cells[4].querySelector("input").value;
 
-        html += `
-        <tr>
+        html+=`<tr>
         <td>${stt}</td>
         <td>${ten}</td>
         <td>${ns}</td>
         <td>${nha}</td>
         <td>${ngay}</td>
-        </tr>
-        `;
+        </tr>`;
     });
 
-    html += "</table>";
+    html+="</table>";
 
-    let w = window.open("");
+    let w=window.open("");
     w.document.write(html);
     w.print();
 }
@@ -251,8 +236,6 @@ function clearForm(){
     ngaytaikham.value="";
 }
 
-
-// LOAD LẦN ĐẦU
 load();
 
 </script>
