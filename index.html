@@ -93,6 +93,21 @@ button { padding:5px 10px; margin:2px; }
 
 const API = "https://script.google.com/macros/s/AKfycbwj8PUcd0vq4LeLlZ5SCxLzQbV2lbfDFnq6ZWuqZ-JEcgbMskbyEzMPLK0Ub8qdJO_ljg/exec";
 
+// 🔥 FIX DATE
+function formatDate(d){
+    if(!d) return "";
+    let date = new Date(d);
+    if(isNaN(date)) return "";
+
+    let y = date.getFullYear();
+    let m = String(date.getMonth()+1).padStart(2,'0');
+    let day = String(date.getDate()).padStart(2,'0');
+
+    return `${y}-${m}-${day}`;
+}
+
+
+
 function them(){
     fetch(API,{
         method:"POST",
@@ -131,7 +146,7 @@ function load(){
             <td class="ten"><input id="hoten_${i}" value="${r.hoten}"></td>
             <td><input id="namsinh_${i}" value="${r.namsinh}"></td>
             <td><input id="nha_${i}" value="${r.nha}"></td>
-            <td><input type="date" id="ngay_${i}" value="${r.ngaytaikham}"></td>
+            <td><input type="date" id="ngay_${i}" value="${formatDate(r.ngaytaikham)}"></td>
             <td><input id="thuoc_${i}" value="${r.thuoc}"></td>
             <td><button onclick="sua(${i})">💾</button></td>
             <td><button onclick="xoa(${i})">❌</button></td>
@@ -192,7 +207,6 @@ function locNha(){
 
 
 function inDanhSach(){
-
     let checked = document.querySelectorAll(".chonNha:checked");
     let selected = Array.from(checked).map(c => c.value);
 
@@ -216,7 +230,6 @@ function inDanhSach(){
         if(i==0) return;
 
         let nha = r.cells[3].querySelector("input").value;
-
         if(selected.length > 0 && !selected.includes(nha)) return;
 
         let ten = r.cells[1].querySelector("input").value;
