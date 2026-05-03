@@ -39,12 +39,12 @@ button{cursor:pointer}
 
 <h2>DANH SÁCH UỐNG THUỐC</h2>
 
-<!-- FORM -->
 <input id="hoten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
 <input id="thuoc" placeholder="Thuốc">
 <input id="ngay" type="date">
+
 <button onclick="them()">Thêm</button>
 <button onclick="inDanhSach()">🖨 In</button>
 
@@ -62,7 +62,6 @@ button{cursor:pointer}
 <br><b>Chọn nhà để in:</b><br>
 <div id="chonNha"></div>
 
-<!-- BẢNG -->
 <table>
 <thead>
 <tr>
@@ -85,13 +84,16 @@ const API = "https://script.google.com/macros/s/AKfycbwj8PUcd0vq4LeLlZ5SCxLzQbV2
 
 let data = [];
 
-// format yyyy-mm-dd -> dd/mm/yyyy
+// format ngày chuẩn dd/mm/yyyy
 function formatDate(d){
   if(!d) return "";
   let x = new Date(d);
+  if(isNaN(x)) return "";
+
   let day = ("0"+x.getDate()).slice(-2);
   let month = ("0"+(x.getMonth()+1)).slice(-2);
   let year = x.getFullYear();
+
   return `${day}/${month}/${year}`;
 }
 
@@ -102,7 +104,7 @@ async function load(){
   render();
 }
 
-// hiển thị bảng
+// hiển thị
 function render(){
   let tim = document.getElementById("tim").value.toLowerCase();
   let loc = document.getElementById("locNha").value;
@@ -111,18 +113,21 @@ function render(){
   let stt = 1;
 
   data.forEach((r,i)=>{
+
     if(tim && !r.hoten.toLowerCase().includes(tim)) return;
     if(loc && r.nha != loc) return;
 
     html += `
     <tr>
       <td>${stt++}</td>
-      <td>${r.hoten}</td>
-      <td>${r.namsinh}</td>
-      <td>${r.nha}</td>
-      <td>${formatDate(r.ngay)}</td>
-      <td>${r.thuoc}</td>
-      <td><button onclick="sua(${i})">💾</button></td>
+      <td><input value="${r.hoten}" id="ht${i}"></td>
+      <td><input value="${r.namsinh}" id="ns${i}"></td>
+      <td><input value="${r.nha}" id="nha${i}"></td>
+      <td>
+        <input type="date" id="ngay${i}" value="${r.ngay || ""}">
+      </td>
+      <td><input value="${r.thuoc}" id="thuoc${i}"></td>
+      <td><button onclick="luu(${i})">💾</button></td>
       <td><button onclick="xoa(${i})">❌</button></td>
     </tr>`;
   });
@@ -130,14 +135,8 @@ function render(){
   document.getElementById("bang").innerHTML = html;
 }
 
-// thêm dữ liệu
+// thêm
 async function them(){
-  const hoten = document.getElementById("hoten");
-  const namsinh = document.getElementById("namsinh");
-  const nha = document.getElementById("nha");
-  const thuoc = document.getElementById("thuoc");
-  const ngay = document.getElementById("ngay");
-
   let obj = {
     hoten: hoten.value,
     namsinh: namsinh.value,
@@ -151,39 +150,52 @@ async function them(){
     body: JSON.stringify(obj)
   });
 
-  // reset form
+  // reset
   hoten.value="";
   namsinh.value="";
   nha.value="";
   thuoc.value="";
   ngay.value="";
-
   hoten.focus();
 
   load();
 }
 
-// xóa
-async function xoa(i){
+// lưu chỉnh sửa
+async function luu(i){
+  let obj = {
+    index: i,
+    hoten: document.getElementById("ht"+i).value,
+    namsinh: document.getElementById("ns"+i).value,
+    nha: document.getElementById("nha"+i).value,
+    thuoc: document.getElementById("thuoc"+i).value,
+    ngay: document.getElementById("ngay"+i).value
+  };
+
   await fetch(API,{
     method:"POST",
-    body: JSON.stringify({xoa:i})
+    body: JSON.stringify(obj)
   });
+
   load();
 }
 
-// sửa (demo đơn giản)
-async function sua(i){
-  let r = data[i];
+// xóa (FIX CHUẨN)
+async function xoa(i){
+  if(!confirm("Xóa dòng này?")) return;
 
-  document.getElementById("hoten").value = r.hoten;
-  document.getElementById("namsinh").value = r.namsinh;
-  document.getElementById("nha").value = r.nha;
-  document.getElementById("thuoc").value = r.thuoc;
-  document.getElementById("ngay").value = r.ngay;
+  await fetch(API,{
+    method:"POST",
+    body: JSON.stringify({
+      action:"delete",
+      index:i
+    })
+  });
+
+  load();
 }
 
-// tạo checkbox nhà
+// checkbox nhà
 function taoChonNha(){
   let html="";
   for(let i=1;i<=9;i++){
@@ -220,7 +232,6 @@ function inDanhSach(){
   w.print();
 }
 
-// init
 taoChonNha();
 load();
 </script>
