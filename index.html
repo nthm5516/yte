@@ -91,7 +91,7 @@ button { padding:5px 10px; margin:2px; }
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbwoS3mKIzGVODIlbxp_h3-G5gSchbxK5s0mCxMHQJ34VNt3atP9RBdo3rgDrRo54UyZvA/exec";
+const API = "https://script.google.com/macros/s/AKfycbyOSxCujlg7Ic740bwzZ8JBrpnhnarRhj6GG1RvLK-ck8ALKP_hFTZCOHySWV-OupiCWA/exec";
 
 function them(){
     fetch(API,{
@@ -128,11 +128,11 @@ function load(){
             html += `
             <tr>
             <td>${i+1}</td>
-            <td class="ten"><input id="hoten_${i}" value="${r.hoten || ''}"></td>
-            <td><input id="namsinh_${i}" value="${r.namsinh || ''}"></td>
-            <td><input id="nha_${i}" value="${r.nha || ''}"></td>
-            <td><input type="date" id="ngay_${i}" value="${r.ngaytaikham || ''}"></td>
-            <td><input id="thuoc_${i}" value="${r.thuoc || ''}"></td>
+            <td class="ten"><input id="hoten_${i}" value="${r.hoten}"></td>
+            <td><input id="namsinh_${i}" value="${r.namsinh}"></td>
+            <td><input id="nha_${i}" value="${r.nha}"></td>
+            <td><input type="date" id="ngay_${i}" value="${r.ngaytaikham}"></td>
+            <td><input id="thuoc_${i}" value="${r.thuoc}"></td>
             <td><button onclick="sua(${i})">💾</button></td>
             <td><button onclick="xoa(${i})">❌</button></td>
             </tr>
