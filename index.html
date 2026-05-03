@@ -35,6 +35,10 @@ th {
 .ten { text-align:left; }
 
 button { padding:5px 10px; margin:2px; }
+
+.boxNha label{
+    margin-right:10px;
+}
 </style>
 </head>
 
@@ -73,12 +77,25 @@ button { padding:5px 10px; margin:2px; }
 <option value="9">Nhà 9</option>
 </select>
 
+<!-- CHỌN NHIỀU NHÀ ĐỂ IN -->
+<div class="boxNha">
+<b>Chọn nhà để in:</b><br>
+<label><input type="checkbox" class="chonNha" value="1">1</label>
+<label><input type="checkbox" class="chonNha" value="2">2</label>
+<label><input type="checkbox" class="chonNha" value="3">3</label>
+<label><input type="checkbox" class="chonNha" value="4">4</label>
+<label><input type="checkbox" class="chonNha" value="5">5</label>
+<label><input type="checkbox" class="chonNha" value="6">6</label>
+<label><input type="checkbox" class="chonNha" value="7">7</label>
+<label><input type="checkbox" class="chonNha" value="8">8</label>
+<label><input type="checkbox" class="chonNha" value="9">9</label>
+</div>
+
 <!-- TABLE -->
 <table id="bang"></table>
 
 <script>
 
-// 🔥 DÁN LINK GOOGLE SCRIPT
 const API = "https://script.google.com/macros/s/AKfycbyEeRLmbkYYHkN0_tkhAUWsgW-cRIXkoARpFzsN9BtQZoVtqw6EYFLXf5-V7qoFh0zNoQ/exec";
 
 
@@ -97,7 +114,7 @@ function them(){
 }
 
 
-// ===== LOAD (ĐÃ FIX LỖI) =====
+// ===== LOAD =====
 function load(){
     fetch(API)
     .then(res=>res.json())
@@ -186,8 +203,12 @@ function locNha(){
 }
 
 
-// ===== IN =====
+// ===== IN NHIỀU NHÀ =====
 function inDanhSach(){
+
+    let checked = document.querySelectorAll(".chonNha:checked");
+    let selected = Array.from(checked).map(c => c.value);
+
     let rows = document.querySelectorAll("#bang tr");
 
     let html = `
@@ -202,27 +223,33 @@ function inDanhSach(){
     </tr>
     `;
 
+    let stt = 1;
+
     rows.forEach((r,i)=>{
         if(i==0) return;
 
-        let stt=i;
-        let ten=r.cells[1].querySelector("input").value;
-        let ns=r.cells[2].querySelector("input").value;
-        let nha=r.cells[3].querySelector("input").value;
-        let ngay=r.cells[4].querySelector("input").value;
+        let nha = r.cells[3].querySelector("input").value;
 
-        html+=`<tr>
-        <td>${stt}</td>
+        if(selected.length > 0 && !selected.includes(nha)) return;
+
+        let ten = r.cells[1].querySelector("input").value;
+        let ns = r.cells[2].querySelector("input").value;
+        let ngay = r.cells[4].querySelector("input").value;
+
+        html += `
+        <tr>
+        <td>${stt++}</td>
         <td>${ten}</td>
         <td>${ns}</td>
         <td>${nha}</td>
         <td>${ngay}</td>
-        </tr>`;
+        </tr>
+        `;
     });
 
-    html+="</table>";
+    html += "</table>";
 
-    let w=window.open("");
+    let w = window.open("");
     w.document.write(html);
     w.print();
 }
@@ -238,7 +265,6 @@ function clearForm(){
 }
 
 
-// LOAD
 load();
 
 </script>
