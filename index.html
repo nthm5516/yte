@@ -78,6 +78,7 @@ button { padding:5px 10px; margin:2px; }
 
 <script>
 
+// 🔥 DÁN LINK GOOGLE SCRIPT
 const API = "https://script.google.com/macros/s/AKfycbyEeRLmbkYYHkN0_tkhAUWsgW-cRIXkoARpFzsN9BtQZoVtqw6EYFLXf5-V7qoFh0zNoQ/exec";
 
 
@@ -96,7 +97,7 @@ function them(){
 }
 
 
-// ===== LOAD =====
+// ===== LOAD (ĐÃ FIX LỖI) =====
 function load(){
     fetch(API)
     .then(res=>res.json())
@@ -118,11 +119,11 @@ function load(){
             html += `
             <tr>
             <td>${i+1}</td>
-            <td class="ten"><input id="hoten_${i}" value="${r.hoten}"></td>
-            <td><input id="namsinh_${i}" value="${r.namsinh}"></td>
-            <td><input id="nha_${i}" value="${r.nha}"></td>
-            <td><input type="date" id="ngay_${i}" value="${r.ngaytaikham}"></td>
-            <td><input id="thuoc_${i}" value="${r.thuoc}"></td>
+            <td class="ten"><input id="hoten_${i}" value="${r.hoten || ''}"></td>
+            <td><input id="namsinh_${i}" value="${r.namsinh || ''}"></td>
+            <td><input id="nha_${i}" value="${r.nha || ''}"></td>
+            <td><input type="date" id="ngay_${i}" value="${r.ngaytaikham || ''}"></td>
+            <td><input id="thuoc_${i}" value="${r.thuoc || ''}"></td>
             <td><button onclick="sua(${i})">💾</button></td>
             <td><button onclick="xoa(${i})">❌</button></td>
             </tr>
@@ -236,6 +237,8 @@ function clearForm(){
     ngaytaikham.value="";
 }
 
+
+// LOAD
 load();
 
 </script>
