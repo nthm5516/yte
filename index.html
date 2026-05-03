@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Danh sách uống thuốc</title>
+
+<style>
+body {
+    font-family: Arial;
+    padding: 10px;
+    background: #f5f6fa;
+}
+
+h2 {
+    text-align: center;
+}
+
+input {
+    width: 140px;
+    padding: 6px;
+    margin: 3px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+}
+
+th {
+    background: #0984e3;
+    color: white;
+}
+
+.ten {
+    text-align: left;
+}
+
+.ngayvang {
+    background: #ffeaa7;
+}
+
+button {
+    padding: 5px 10px;
+    margin: 2px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>DANH SÁCH UỐNG THUỐC</h2>
+
+<!-- FORM NHẬP -->
+<div>
+<input id="hoten" placeholder="Họ tên">
+<input id="namsinh" placeholder="Năm sinh">
+<input id="nha" placeholder="Nhà">
+<input id="thuoc" placeholder="Thuốc">
+<input type="date" id="ngaytaikham">
+<button onclick="them()">Thêm</button>
+</div>
+
+<!-- TÌM -->
+<br>
+<input id="timten" placeholder="🔍 Tìm tên..." onkeyup="timTen()">
+
+<!-- BẢNG -->
+<table id="bang"></table>
+
+<script>
+
+// 🔥 DÁN LINK GOOGLE SCRIPT VÀO ĐÂY
+const API = "https://script.google.com/macros/s/AKfycbzZm6qVxSOxjxW6dk3qlZhd1tX5jNFHD0pRwwMLArd2jW1UDgCHRX3x9KiVBbA3zaGK-w/exec";
+
+
+// ===== THÊM =====
+function them(){
+    fetch(API,{
+        method:"POST",
+        body:JSON.stringify({
+            hoten:hoten.value,
+            namsinh:namsinh.value,
+            nha:nha.value,
+            thuoc:thuoc.value,
+            ngaytaikham:ngaytaikham.value
+        })
+    }).then(()=>{
+        clearForm();
+        load();
+    });
+}
+
+
+// ===== LOAD =====
+function load(){
+    fetch(API)
+    .then(res=>res.json())
+    .then(data=>{
+        let html = `
+        <tr>
+        <th>STT</th>
+        <th>Họ tên</th>
+        <th>Năm sinh</th>
+        <th>Nhà</th>
+        <th>Ngày tái khám</th>
+        <th>Thuốc</th>
+        <th>Sửa</th>
+        <th>Xóa</th>
+        </tr>
+        `;
+
+        data.forEach((r,i)=>{
+            let vang = r.ngaytaikham ? "ngayvang" : "";
+
+            html += `
+            <tr>
+            <td>${i+1}</td>
+
+            <td class="ten">
+                <input id="hoten_${i}" value="${r.hoten}">
+            </td>
+
+            <td>
+                <input id="namsinh_${i}" value="${r.namsinh}">
+            </td>
+
+            <td>
+                <input id="nha_${i}" value="${r.nha}">
+            </td>
+
+            <td>
+                <input type="date" id="ngay_${i}" value="${r.ngaytaikham}" class="${vang}">
+            </td>
+
+            <td>
+                <input id="thuoc_${i}" value="${r.thuoc}">
+            </td>
+
+            <td>
+                <button onclick="sua(${i})">💾</button>
+            </td>
+
+            <td>
+                <button onclick="xoa(${i})">❌</button>
+            </td>
+            </tr>
+            `;
+        });
+
+        bang.innerHTML = html;
+    });
+}
+
+
+// ===== SỬA =====
+function sua(i){
+    fetch(API,{
+        method:"POST",
+        body:JSON.stringify({
+            index:i,
+            hoten:document.getElementById("hoten_"+i).value,
+            namsinh:document.getElementById("namsinh_"+i).value,
+            nha:document.getElementById("nha_"+i).value,
+            thuoc:document.getElementById("thuoc_"+i).value,
+            ngaytaikham:document.getElementById("ngay_"+i).value
+        })
+    }).then(()=>load());
+}
+
+
+// ===== XÓA =====
+function xoa(i){
+    if(confirm("Xóa dòng này?")){
+        fetch(API,{
+            method:"POST",
+            body:JSON.stringify({delete:i})
+        }).then(()=>load());
+    }
+}
+
+
+// ===== TÌM =====
+function timTen(){
+    let key = timten.value.toLowerCase();
+    let rows = bang.querySelectorAll("tr");
+
+    rows.forEach((r,i)=>{
+        if(i==0) return;
+        let ten = r.cells[1].querySelector("input").value.toLowerCase();
+        r.style.display = ten.includes(key) ? "" : "none";
+    });
+}
+
+
+// ===== CLEAR FORM =====
+function clearForm(){
+    hoten.value="";
+    namsinh.value="";
+    nha.value="";
+    thuoc.value="";
+    ngaytaikham.value="";
+}
+
+
+// LOAD LẦN ĐẦU
+load();
+
+</script>
+
+</body>
+</html>
