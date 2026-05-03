@@ -41,7 +41,7 @@ input[type="text"], input[type="number"] {
 }
 
 input[type="date"] {
-  width: 140px;
+  width: 150px;
 }
 </style>
 </head>
@@ -124,11 +124,11 @@ function render(data) {
     html += `
       <tr>
         <td>${i+1}</td>
-        <td>${hoten}</td>
-        <td>${namsinh}</td>
-        <td>${nha}</td>
-        <td>${formatDate(ngay)}</td>
-        <td>${thuoc}</td>
+        <td><input value="${hoten}"></td>
+        <td><input value="${namsinh}"></td>
+        <td><input value="${nha}"></td>
+        <td><input type="date" value="${formatDate(ngay)}"></td>
+        <td><input value="${thuoc}"></td>
       </tr>
     `;
   });
@@ -148,6 +148,13 @@ async function them() {
     method: "POST",
     body: JSON.stringify({ hoten, namsinh, nha, thuoc, ngay })
   });
+
+  // reset form
+  document.getElementById("hoten").value = "";
+  document.getElementById("namsinh").value = "";
+  document.getElementById("nha").value = "";
+  document.getElementById("thuoc").value = "";
+  document.getElementById("ngay").value = "";
 
   load();
 }
@@ -174,7 +181,7 @@ function taoCheck() {
   document.getElementById("chonNha").innerHTML = html;
 }
 
-// in
+// in danh sách
 function inDanhSach() {
   const checked = [...document.querySelectorAll("#chonNha input:checked")].map(c=>c.value);
 
@@ -182,7 +189,7 @@ function inDanhSach() {
     checked.length === 0 || checked.includes(String(r.nha))
   );
 
-  let html = "<h3>DANH SÁCH</h3><table border=1><tr><th>STT</th><th>Họ tên</th><th>Năm sinh</th><th>Nhà</th><th>Ngày tái khám</th></tr>";
+  let html = "<h3>DANH SÁCH TÁI KHÁM</h3><table border=1><tr><th>STT</th><th>Họ tên</th><th>Năm sinh</th><th>Nhà</th><th>Ngày tái khám</th></tr>";
 
   data.forEach((r,i)=>{
     html += `<tr>
