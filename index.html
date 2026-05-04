@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
 <head>
 <meta charset="UTF-8">
@@ -33,6 +34,7 @@ td{
 
 button{cursor:pointer}
 </style>
+
 </head>
 
 <body>
@@ -45,8 +47,7 @@ button{cursor:pointer}
 <input id="thuoc" placeholder="Thuốc">
 <input id="ngay" type="date">
 
-<button onclick="them()">Thêm</button>
-<button onclick="inDanhSach()">🖨 In</button>
+<button onclick="them()">Thêm</button> <button onclick="inDanhSach()">🖨 In</button>
 
 <br>
 
@@ -60,6 +61,7 @@ button{cursor:pointer}
 </select>
 
 <br><b>Chọn nhà để in:</b><br>
+
 <div id="chonNha"></div>
 
 <table>
@@ -80,24 +82,33 @@ button{cursor:pointer}
 </table>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbwj8PUcd0vq4LeLlZ5SCxLzQbV2lbfDFnq6ZWuqZ-JEcgbMskbyEzMPLK0Ub8qdJO_ljg/exec";
+const API = "https://script.google.com/macros/s/AKfycbwV3J7HxsAyTltoElDYGssVlYRe3_3hgQOvtnZcLMECzyz5VlmREox_5FC5aD1CfIyKbw/exec";
 
 let data = [];
 
-// FORMAT NGÀY CHUẨN
+// FIX DATE CHO INPUT
+function fixDateInput(d){
+  if(!d) return "";
+  let x = new Date(d);
+  if(isNaN(x)) return "";
+  let year = x.getFullYear();
+  let month = ("0"+(x.getMonth()+1)).slice(-2);
+  let day = ("0"+x.getDate()).slice(-2);
+  return `${year}-${month}-${day}`;
+}
+
+// FORMAT NGÀY IN
 function formatDate(d){
   if(!d) return "";
   let x = new Date(d);
   if(isNaN(x)) return "";
-
   let day = ("0"+x.getDate()).slice(-2);
   let month = ("0"+(x.getMonth()+1)).slice(-2);
   let year = x.getFullYear();
-
   return `${day}/${month}/${year}`;
 }
 
-// LOAD
+// LOAD DATA
 async function load(){
   let res = await fetch(API);
   data = await res.json();
@@ -125,7 +136,7 @@ function render(){
       <td><input value="${r.nha}" id="nha${i}"></td>
 
       <td>
-        <input type="date" id="ngay${i}" value="${r.ngay || ""}">
+        <input type="date" id="ngay${i}" value="${fixDateInput(r.ngay)}">
       </td>
 
       <td><input value="${r.thuoc}" id="thuoc${i}"></td>
@@ -206,7 +217,7 @@ function taoChonNha(){
   document.getElementById("chonNha").innerHTML = html;
 }
 
-// IN (FIX GỌN + KHÔNG VIỀN TO)
+// IN
 function inDanhSach(){
   let checked = document.querySelectorAll("#chonNha input:checked");
   let arr = [...checked].map(x=>x.value);
@@ -231,32 +242,34 @@ function inDanhSach(){
   </tr>
   `;
 
-  let stt=1;
+let stt=1;
 
-  data.forEach(r=>{
-    if(arr.length && !arr.includes(r.nha)) return;
+data.forEach(r=>{
+if(arr.length && !arr.includes(r.nha)) return;
 
-    html += `
-    <tr>
-      <td>${stt++}</td>
-      <td>${r.hoten}</td>
-      <td>${r.namsinh}</td>
-      <td>${r.nha}</td>
-      <td>${formatDate(r.ngay)}</td>
-    </tr>`;
-  });
+```
+html += `
+<tr>
+  <td>${stt++}</td>
+  <td>${r.hoten}</td>
+  <td>${r.namsinh}</td>
+  <td>${r.nha}</td>
+  <td>${formatDate(r.ngay)}</td>
+</tr>`;
+```
 
-  html += "</table>";
+});
 
-  let w = window.open("");
-  w.document.write(html);
-  w.print();
+html += "</table>";
+
+let w = window.open("");
+w.document.write(html);
+w.print();
 }
 
 // INIT
 taoChonNha();
-load();
-</script>
+load(); </script>
 
 </body>
 </html>
