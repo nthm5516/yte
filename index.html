@@ -8,31 +8,10 @@
 <style>
 body{font-family:Arial;background:#f5f6fa;padding:20px}
 h2{text-align:center}
-
-input,select,button{
-  padding:8px;
-  margin:5px;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-
-th{
-  background:#2e75b6;
-  color:white;
-  padding:10px;
-}
-
-td{
-  border:1px solid #ccc;
-  padding:5px;
-  text-align:center;
-}
-
-button{cursor:pointer}
+input,button{padding:8px;margin:5px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th{background:#2e75b6;color:white;padding:10px}
+td{border:1px solid #ccc;padding:5px;text-align:center}
 </style>
 
 </head>
@@ -47,22 +26,7 @@ button{cursor:pointer}
 <input id="thuoc" placeholder="Thuốc">
 <input id="ngay" type="date">
 
-<button onclick="them()">Thêm</button> <button onclick="inDanhSach()">🖨 In</button>
-
-<br>
-
-<input id="tim" placeholder="🔍 Tìm tên..." oninput="render()">
-
-<select id="locNha" onchange="render()">
-  <option value="">🏠 Lọc theo nhà</option>
-  <option>1</option><option>2</option><option>3</option>
-  <option>4</option><option>5</option><option>6</option>
-  <option>7</option><option>8</option><option>9</option>
-</select>
-
-<br><b>Chọn nhà để in:</b><br>
-
-<div id="chonNha"></div>
+<button onclick="them()">Thêm</button>
 
 <table>
 <thead>
@@ -77,107 +41,43 @@ button{cursor:pointer}
 <th>Xóa</th>
 </tr>
 </thead>
-
 <tbody id="bang"></tbody>
 </table>
 
-<script>
-const API = "https://script.google.com/macros/s/AKfycby-KOx6Qc2BRhsklfHNXrFacDlB17fDglDnznTtXGLE1XPqlsbASQcxA03ZK3RWPMMj_A/exec";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDpuS7LUymdqr--QKtg1zmQpUEH2osuPj4",
+  authDomain: "thuoctamthan-df187.firebaseapp.com",
+  projectId: "thuoctamthan-df187",
+  storageBucket: "thuoctamthan-df187.firebasestorage.app",
+  messagingSenderId: "796983672732",
+  appId: "1:796983672732:web:bb34f8b0e15b0981455259"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 let data = [];
 
-// ===== FIX DATE =====
-function fixDateInput(d){
-  if(!d) return "";
-
-  let x = new Date(d);
-  if(isNaN(x)) return "";
-
-  let y = x.getFullYear();
-  let m = ("0"+(x.getMonth()+1)).slice(-2);
-  let day = ("0"+x.getDate()).slice(-2);
-
-  return `${y}-${m}-${day}`;
-}
-
-function formatDate(d){
-  if(!d) return "";
-
-  let x = new Date(d);
-  if(isNaN(x)) return "";
-
-  let day = ("0"+x.getDate()).slice(-2);
-  let month = ("0"+(x.getMonth()+1)).slice(-2);
-  let year = x.getFullYear();
-
-  return `${day}/${month}/${year}`;
-}
-
-// ===== LOAD =====
+// LOAD DATA
 async function load(){
-  try{
-    let res = await fetch(API);
-    data = await res.json();
-    render();
-  }catch(e){
-    alert("Lỗi tải dữ liệu!");
-    console.error(e);
-  }
+  const snap = await getDocs(collection(db, "benhnhan"));
+  data = [];
+  snap.forEach(d => data.push({ id: d.id, ...d.data() }));
+  render();
 }
 
-// ===== RENDER =====
-function render(){
-  let tim = document.getElementById("tim").value.toLowerCase();
-  let loc = document.getElementById("locNha").value;
-
-  let html = "";
-  let stt = 1;
-
-  data.forEach((r,i)=>{
-
-    let hoten = r.hoten || "";
-    let namsinh = r.namsinh || "";
-    let nha = r.nha || "";
-    let thuoc = r.thuoc || "";
-    let ngay = r.ngaytaikham || "";
-
-    if(tim && !hoten.toLowerCase().includes(tim)) return;
-    if(loc && nha != loc) return;
-
-    html += `
-    <tr>
-      <td>${stt++}</td>
-      <td><input value="${hoten}" id="ht${i}"></td>
-      <td><input value="${namsinh}" id="ns${i}"></td>
-      <td><input value="${nha}" id="nha${i}"></td>
-
-      <td>
-        <input type="date" id="ngay${i}" value="${fixDateInput(ngay)}">
-      </td>
-
-      <td><input value="${thuoc}" id="thuoc${i}"></td>
-
-      <td><button onclick="luu(${i})">💾</button></td>
-      <td><button onclick="xoa(${i})">❌</button></td>
-    </tr>`;
-  });
-
-  document.getElementById("bang").innerHTML = html;
-}
-
-// ===== THÊM =====
-async function them(){
-  let obj = {
+// THÊM
+window.them = async function(){
+  await addDoc(collection(db, "benhnhan"), {
     hoten: hoten.value,
     namsinh: namsinh.value,
     nha: nha.value,
     thuoc: thuoc.value,
     ngaytaikham: ngay.value
-  };
-
-  await fetch(API,{
-    method:"POST",
-    body: JSON.stringify(obj)
   });
 
   hoten.value="";
@@ -186,106 +86,52 @@ async function them(){
   thuoc.value="";
   ngay.value="";
 
-  hoten.focus();
   load();
-}
+};
 
-// ===== SỬA =====
-async function luu(i){
-  let obj = {
-    index: i,
+// SỬA
+window.luu = async function(i){
+  await updateDoc(doc(db,"benhnhan",data[i].id),{
     hoten: document.getElementById("ht"+i).value,
     namsinh: document.getElementById("ns"+i).value,
     nha: document.getElementById("nha"+i).value,
     thuoc: document.getElementById("thuoc"+i).value,
     ngaytaikham: document.getElementById("ngay"+i).value
-  };
-
-  await fetch(API,{
-    method:"POST",
-    body: JSON.stringify(obj)
   });
-
   load();
-}
+};
 
-// ===== XÓA =====
-async function xoa(i){
+// XÓA
+window.xoa = async function(i){
   if(!confirm("Xóa dòng này?")) return;
+  await deleteDoc(doc(db,"benhnhan",data[i].id));
+  load();
+};
 
-  await fetch(API,{
-    method:"POST",
-    body: JSON.stringify({
-      action:"delete",
-      index:i
-    })
+// HIỂN THỊ
+function render(){
+  let html="";
+  let stt=1;
+
+  data.forEach((r,i)=>{
+    html += `
+    <tr>
+      <td>${stt++}</td>
+      <td><input value="${r.hoten||""}" id="ht${i}"></td>
+      <td><input value="${r.namsinh||""}" id="ns${i}"></td>
+      <td><input value="${r.nha||""}" id="nha${i}"></td>
+      <td><input type="date" value="${r.ngaytaikham||""}" id="ngay${i}"></td>
+      <td><input value="${r.thuoc||""}" id="thuoc${i}"></td>
+      <td><button onclick="luu(${i})">💾</button></td>
+      <td><button onclick="xoa(${i})">❌</button></td>
+    </tr>`;
   });
 
-  load();
+  document.getElementById("bang").innerHTML = html;
 }
 
-// ===== CHECKBOX =====
-function taoChonNha(){
-  let html="";
-  for(let i=1;i<=9;i++){
-    html += `<label><input type="checkbox" value="${i}"> ${i}</label> `;
-  }
-  document.getElementById("chonNha").innerHTML = html;
-}
-
-// ===== IN =====
-function inDanhSach(){
-  let checked = document.querySelectorAll("#chonNha input:checked");
-  let arr = [...checked].map(x=>x.value);
-
-  let html = `
-  <style>
-    body{font-family:Arial;padding:10px}
-    h3{text-align:center;margin-bottom:10px}
-    table{border-collapse:collapse;width:100%}
-    th,td{border:1px solid #000;padding:6px;text-align:center}
-    th{background:#eee}
-  </style>
-
-  <h3>DANH SÁCH</h3>
-  <table>
-  <tr>
-    <th>STT</th>
-    <th>Họ tên</th>
-    <th>Năm sinh</th>
-    <th>Nhà</th>
-    <th>Ngày tái khám</th>
-  </tr>
-  `;
-
-let stt=1;
-
-data.forEach(r=>{
-if(arr.length && !arr.includes(r.nha)) return;
-
-```
-html += `
-<tr>
-  <td>${stt++}</td>
-  <td>${r.hoten || ""}</td>
-  <td>${r.namsinh || ""}</td>
-  <td>${r.nha || ""}</td>
-  <td>${formatDate(r.ngaytaikham)}</td>
-</tr>`;
-```
-
-});
-
-html += "</table>";
-
-let w = window.open("");
-w.document.write(html);
-w.print();
-}
-
-// INIT
-taoChonNha();
-load(); </script>
+load();
+</script>
 
 </body>
 </html>
