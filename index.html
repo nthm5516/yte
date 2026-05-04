@@ -5,28 +5,12 @@
 <title>DANH SÁCH UỐNG THUỐC</title>
 
 <style>
-body{
-    font-family: Arial;
-    text-align:center;
-}
-input, select, button{
-    padding:6px;
-    margin:4px;
-}
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-}
-th{
-    background:#2f6fa3;
-    color:white;
-    padding:8px;
-}
-td{
-    border:1px solid #ccc;
-    padding:6px;
-}
+body{font-family:Arial;text-align:center}
+input,select,button{padding:6px;margin:4px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th{background:#2f6fa3;color:#fff;padding:8px}
+td{border:1px solid #ccc;padding:6px}
+button{cursor:pointer}
 </style>
 </head>
 
@@ -41,7 +25,7 @@ td{
 <input id="thuoc" placeholder="Thuốc">
 <input type="date" id="ngay">
 
-<button onclick="them()">Thêm</button>
+<button onclick="them()">➕ Thêm</button>
 
 <br>
 
@@ -49,21 +33,20 @@ td{
 <input id="timten" placeholder="🔍 Tìm tên..." onkeyup="load()">
 
 <select id="locNha" onchange="load()">
-    <option value="">🏠 Tất cả nhà</option>
-    <option value="1">Nhà 1</option>
-    <option value="2">Nhà 2</option>
-    <option value="3">Nhà 3</option>
-    <option value="4">Nhà 4</option>
-    <option value="5">Nhà 5</option>
-    <option value="6">Nhà 6</option>
-    <option value="7">Nhà 7</option>
-    <option value="8">Nhà 8</option>
-    <option value="9">Nhà 9</option>
+<option value="">🏠 Tất cả nhà</option>
+<option value="1">Nhà 1</option>
+<option value="2">Nhà 2</option>
+<option value="3">Nhà 3</option>
+<option value="4">Nhà 4</option>
+<option value="5">Nhà 5</option>
+<option value="6">Nhà 6</option>
+<option value="7">Nhà 7</option>
+<option value="8">Nhà 8</option>
+<option value="9">Nhà 9</option>
 </select>
 
 <button onclick="inDanhSach()">🖨 In</button>
 
-<!-- TABLE -->
 <table>
 <thead>
 <tr>
@@ -73,6 +56,7 @@ td{
 <th>Nhà</th>
 <th>Ngày tái khám</th>
 <th>Thuốc</th>
+<th>Sửa</th>
 <th>Xóa</th>
 </tr>
 </thead>
@@ -80,22 +64,21 @@ td{
 <tbody id="bang"></tbody>
 </table>
 
-<!-- FIREBASE -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc,
-  getDocs, deleteDoc, doc
+getFirestore, collection, addDoc, getDocs,
+deleteDoc, doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "thuoctamthan-df187.firebaseapp.com",
-  projectId: "thuoctamthan-df187",
-  storageBucket: "thuoctamthan-df187.appspot.com",
-  messagingSenderId: "796983672732",
-  appId: "1:796983672732:web:xxx"
+apiKey: "AIzaSy...",
+authDomain: "thuoctamthan-df187.firebaseapp.com",
+projectId: "thuoctamthan-df187",
+storageBucket: "thuoctamthan-df187.appspot.com",
+messagingSenderId: "796983672732",
+appId: "1:796983672732:web:xxx"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -106,115 +89,134 @@ let data = [];
 
 // LOAD DATA
 async function load(){
-    const snap = await getDocs(collection(db,"benhnhan"));
-    data = [];
-
-    snap.forEach(doc=>{
-        data.push({id:doc.id,...doc.data()});
-    });
-
-    render();
+const snap = await getDocs(collection(db,"benhnhan"));
+data=[];
+snap.forEach(d=>{
+data.push({id:d.id,...d.data()});
+});
+render();
 }
 
 
 // RENDER
 function render(){
-    let html="";
-    let stt=1;
+let html="";
+let stt=1;
 
-    let tim = document.getElementById("timten").value.toLowerCase();
-    let locNha = document.getElementById("locNha").value;
+let tim = document.getElementById("timten").value.toLowerCase();
+let locNha = document.getElementById("locNha").value;
 
-    data.forEach(r=>{
+data.forEach(r=>{
 
-        // lọc tên
-        if(tim && !r.hoten.toLowerCase().includes(tim)) return;
+if(tim && !r.hoten?.toLowerCase().includes(tim)) return;
 
-        // lọc nhà (FIX CHUẨN)
-        if (locNha && String(r.nha).trim() != String(locNha).trim()) return;
+// FIX LỌC NHÀ
+if(locNha && String(r.nha).trim() != String(locNha).trim()) return;
 
-        html+=`
-        <tr>
-        <td>${stt++}</td>
-        <td>${r.hoten||""}</td>
-        <td>${r.namsinh||""}</td>
-        <td>${r.nha||""}</td>
-        <td>${r.ngaytaikham||""}</td>
-        <td>${r.thuoc||""}</td>
-        <td><button onclick="xoa('${r.id}')">X</button></td>
-        </tr>
-        `;
-    });
+html+=`
+<tr>
+<td>${stt++}</td>
+<td><input value="${r.hoten||""}" id="ten${r.id}"></td>
+<td><input value="${r.namsinh||""}" id="ns${r.id}"></td>
+<td><input value="${r.nha||""}" id="nha${r.id}"></td>
+<td><input type="date" value="${r.ngaytaikham||""}" id="ngay${r.id}"></td>
+<td><input value="${r.thuoc||""}" id="thuoc${r.id}"></td>
+<td><button onclick="sua('${r.id}')">💾</button></td>
+<td><button onclick="xoa('${r.id}')">❌</button></td>
+</tr>
+`;
+});
 
-    document.getElementById("bang").innerHTML=html;
+document.getElementById("bang").innerHTML=html;
 }
 
 
 // THÊM
 async function them(){
-    let hoten = document.getElementById("hoten").value;
-    let namsinh = document.getElementById("namsinh").value;
-    let nha = document.getElementById("nha").value;
-    let thuoc = document.getElementById("thuoc").value;
-    let ngay = document.getElementById("ngay").value;
+let hoten = document.getElementById("hoten").value.trim();
+let namsinh = document.getElementById("namsinh").value.trim();
+let nha = document.getElementById("nha").value.trim();
+let thuoc = document.getElementById("thuoc").value.trim();
+let ngay = document.getElementById("ngay").value;
 
-    await addDoc(collection(db,"benhnhan"),{
-        hoten,namsinh,nha,thuoc,ngaytaikham:ngay
-    });
+if(!hoten){ alert("Nhập họ tên"); return;}
 
-    load();
+await addDoc(collection(db,"benhnhan"),{
+hoten,namsinh,nha,thuoc,ngaytaikham:ngay
+});
+
+load();
+}
+
+
+// SỬA
+async function sua(id){
+let hoten = document.getElementById("ten"+id).value;
+let namsinh = document.getElementById("ns"+id).value;
+let nha = document.getElementById("nha"+id).value;
+let thuoc = document.getElementById("thuoc"+id).value;
+let ngay = document.getElementById("ngay"+id).value;
+
+await updateDoc(doc(db,"benhnhan",id),{
+hoten,namsinh,nha,thuoc,ngaytaikham:ngay
+});
+
+alert("Đã lưu");
+load();
 }
 
 
 // XOÁ
 async function xoa(id){
-    await deleteDoc(doc(db,"benhnhan",id));
-    load();
+if(!confirm("Xóa?")) return;
+await deleteDoc(doc(db,"benhnhan",id));
+load();
 }
 
 
 // IN
 function inDanhSach(){
 
-    let locNha = document.getElementById("locNha").value;
-    let tim = document.getElementById("timten").value.toLowerCase();
+let locNha = document.getElementById("locNha").value;
+let tim = document.getElementById("timten").value.toLowerCase();
 
-    let html = `
-    <h3 style="text-align:center">DANH SÁCH UỐNG THUỐC</h3>
-    <table border="1" style="width:100%;border-collapse:collapse;text-align:center">
-    <tr>
-    <th>STT</th>
-    <th>Họ tên</th>
-    <th>Năm sinh</th>
-    <th>Nhà</th>
-    <th>Ngày tái khám</th>
-    </tr>
-    `;
+let html=`
+<h3 style="text-align:center">DANH SÁCH UỐNG THUỐC</h3>
+<table border="1" style="width:100%;border-collapse:collapse;text-align:center">
+<tr>
+<th>STT</th>
+<th>Họ tên</th>
+<th>Năm sinh</th>
+<th>Nhà</th>
+<th>Ngày tái khám</th>
+</tr>
+`;
 
-    let stt=1;
+let stt=1;
 
-    data.forEach(r=>{
+data.forEach(r=>{
 
-        if(tim && !r.hoten.toLowerCase().includes(tim)) return;
-        if(locNha && String(r.nha).trim() !== locNha) return;
+if(tim && !r.hoten?.toLowerCase().includes(tim)) return;
+if(locNha && String(r.nha).trim() != String(locNha).trim()) return;
 
-        html+=`
-        <tr>
-        <td>${stt++}</td>
-        <td>${r.hoten||""}</td>
-        <td>${r.namsinh||""}</td>
-        <td>${r.nha||""}</td>
-        <td>${r.ngaytaikham||""}</td>
-        </tr>
-        `;
-    });
+html+=`
+<tr>
+<td>${stt++}</td>
+<td>${r.hoten||""}</td>
+<td>${r.namsinh||""}</td>
+<td>${r.nha||""}</td>
+<td>${r.ngaytaikham||""}</td>
+</tr>
+`;
+});
 
-    html+="</table>";
+html+="</table>";
 
-    let w=window.open("");
-    w.document.write(html);
-    w.print();
+let w=window.open("");
+w.document.write(html);
+w.print();
 }
+
 
 load();
 
