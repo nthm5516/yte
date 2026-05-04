@@ -131,7 +131,7 @@ function render(){
         if(tim && !r.hoten.toLowerCase().includes(tim)) return;
 
         // lọc nhà (FIX CHUẨN)
-        if(locNha && String(r.nha).trim() !== locNha) return;
+        if (locNha && String(r.nha).trim() != String(locNha).trim()) return;
 
         html+=`
         <tr>
