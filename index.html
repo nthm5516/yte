@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
 <title>DANH SÁCH UỐNG THUỐC</title>
 
 <style>
-body{font-family:Arial;background:#f5f6fa;padding:20px}
+body{font-family:Arial;padding:20px}
 h2{text-align:center}
-input,button{padding:8px;margin:5px}
+
+input,select,button{padding:6px;margin:5px}
+
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th{background:#2e75b6;color:white;padding:10px}
-td{border:1px solid #ccc;padding:5px;text-align:center}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#2f6ea3;color:white}
 </style>
 
 </head>
@@ -24,9 +26,18 @@ td{border:1px solid #ccc;padding:5px;text-align:center}
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà">
 <input id="thuoc" placeholder="Thuốc">
-<input id="ngay" type="date">
+<input type="date" id="ngay">
 
 <button onclick="them()">Thêm</button>
+
+<select id="locNha" onchange="load()">
+  <option value="">Tất cả nhà</option>
+  <option>1</option><option>2</option><option>3</option>
+  <option>4</option><option>5</option><option>6</option>
+  <option>7</option><option>8</option><option>9</option>
+</select>
+
+<button onclick="inDanhSach()">🖨 In</button>
 
 <table>
 <thead>
@@ -37,8 +48,6 @@ td{border:1px solid #ccc;padding:5px;text-align:center}
 <th>Nhà</th>
 <th>Ngày tái khám</th>
 <th>Thuốc</th>
-<th>Sửa</th>
-<th>Xóa</th>
 </tr>
 </thead>
 <tbody id="bang"></tbody>
@@ -46,7 +55,7 @@ td{border:1px solid #ccc;padding:5px;text-align:center}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDpuS7LUymdqr--QKtg1zmQpUEH2osuPj4",
@@ -60,75 +69,82 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let data = [];
+// LOAD
+async function load() {
+  const loc = document.getElementById("locNha").value;
+  const querySnapshot = await getDocs(collection(db, "benhnhan"));
 
-// LOAD DATA
-async function load(){
-  const snap = await getDocs(collection(db, "benhnhan"));
-  data = [];
-  snap.forEach(d => data.push({ id: d.id, ...d.data() }));
-  render();
-}
+  let html = "";
+  let stt = 1;
 
-// THÊM
-window.them = async function(){
-  await addDoc(collection(db, "benhnhan"), {
-    hoten: hoten.value,
-    namsinh: namsinh.value,
-    nha: nha.value,
-    thuoc: thuoc.value,
-    ngaytaikham: ngay.value
-  });
+  querySnapshot.forEach((doc) => {
+    const r = doc.data();
 
-  hoten.value="";
-  namsinh.value="";
-  nha.value="";
-  thuoc.value="";
-  ngay.value="";
+    if (loc && r.nha != loc) return;
 
-  load();
-};
-
-// SỬA
-window.luu = async function(i){
-  await updateDoc(doc(db,"benhnhan",data[i].id),{
-    hoten: document.getElementById("ht"+i).value,
-    namsinh: document.getElementById("ns"+i).value,
-    nha: document.getElementById("nha"+i).value,
-    thuoc: document.getElementById("thuoc"+i).value,
-    ngaytaikham: document.getElementById("ngay"+i).value
-  });
-  load();
-};
-
-// XÓA
-window.xoa = async function(i){
-  if(!confirm("Xóa dòng này?")) return;
-  await deleteDoc(doc(db,"benhnhan",data[i].id));
-  load();
-};
-
-// HIỂN THỊ
-function render(){
-  let html="";
-  let stt=1;
-
-  data.forEach((r,i)=>{
     html += `
-    <tr>
-      <td>${stt++}</td>
-      <td><input value="${r.hoten||""}" id="ht${i}"></td>
-      <td><input value="${r.namsinh||""}" id="ns${i}"></td>
-      <td><input value="${r.nha||""}" id="nha${i}"></td>
-      <td><input type="date" value="${r.ngaytaikham||""}" id="ngay${i}"></td>
-      <td><input value="${r.thuoc||""}" id="thuoc${i}"></td>
-      <td><button onclick="luu(${i})">💾</button></td>
-      <td><button onclick="xoa(${i})">❌</button></td>
-    </tr>`;
+      <tr>
+        <td>${stt++}</td>
+        <td>${r.hoten||""}</td>
+        <td>${r.namsinh||""}</td>
+        <td>${r.nha||""}</td>
+        <td>${r.ngaytaikham||""}</td>
+        <td>${r.thuoc||""}</td>
+      </tr>
+    `;
   });
 
   document.getElementById("bang").innerHTML = html;
 }
+
+// ADD
+window.them = async function () {
+  await addDoc(collection(db, "benhnhan"), {
+    hoten: document.getElementById("hoten").value,
+    namsinh: document.getElementById("namsinh").value,
+    nha: document.getElementById("nha").value,
+    thuoc: document.getElementById("thuoc").value,
+    ngaytaikham: document.getElementById("ngay").value
+  });
+
+  alert("Đã lưu!");
+  load();
+};
+
+// IN (chỉ 4 cột)
+window.inDanhSach = function () {
+  const rows = document.querySelectorAll("#bang tr");
+
+  let html = `
+  <h2 style="text-align:center">DANH SÁCH UỐNG THUỐC</h2>
+  <table border="1" style="width:100%;border-collapse:collapse">
+  <tr>
+  <th>STT</th>
+  <th>Họ tên</th>
+  <th>Năm sinh</th>
+  <th>Ngày tái khám</th>
+  </tr>
+  `;
+
+  rows.forEach(tr=>{
+    const td = tr.querySelectorAll("td");
+
+    html += `
+    <tr>
+    <td>${td[0].innerText}</td>
+    <td>${td[1].innerText}</td>
+    <td>${td[2].innerText}</td>
+    <td>${td[4].innerText}</td>
+    </tr>
+    `;
+  });
+
+  html += "</table>";
+
+  let win = window.open("");
+  win.document.write(html);
+  win.print();
+};
 
 load();
 </script>
