@@ -82,48 +82,50 @@ button{cursor:pointer}
 </table>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbwHnQstTQydfuvsx6t9JNSmfP0K0YEGFZk7aMqu1WH0I_nH4upIf7csijKbolLibI4/exec";
+const API = "https://script.google.com/macros/s/AKfycbwj8PUcd0vq4LeLlZ5SCxLzQbV2lbfDFnq6ZWuqZ-JEcgbMskbyEzMPLK0Ub8qdJO_ljg/exec";
 
 let data = [];
 
-// FIX DATE CHUẨN CHO INPUT
+// ===== FIX DATE =====
 function fixDateInput(d){
   if(!d) return "";
 
-  // nếu đã đúng format thì trả luôn
-  if(typeof d === "string" && d.includes("-") && d.length >= 10){
-    return d.substring(0,10);
-  }
-
   let x = new Date(d);
   if(isNaN(x)) return "";
 
-  let year = x.getFullYear();
-  let month = ("0"+(x.getMonth()+1)).slice(-2);
+  let y = x.getFullYear();
+  let m = ("0"+(x.getMonth()+1)).slice(-2);
   let day = ("0"+x.getDate()).slice(-2);
 
-  return `${year}-${month}-${day}`;
+  return `${y}-${m}-${day}`;
 }
 
-// FORMAT NGÀY IN
 function formatDate(d){
   if(!d) return "";
+
   let x = new Date(d);
   if(isNaN(x)) return "";
+
   let day = ("0"+x.getDate()).slice(-2);
   let month = ("0"+(x.getMonth()+1)).slice(-2);
   let year = x.getFullYear();
+
   return `${day}/${month}/${year}`;
 }
 
-// LOAD
+// ===== LOAD =====
 async function load(){
-  let res = await fetch(API);
-  data = await res.json();
-  render();
+  try{
+    let res = await fetch(API);
+    data = await res.json();
+    render();
+  }catch(e){
+    alert("Lỗi tải dữ liệu!");
+    console.error(e);
+  }
 }
 
-// HIỂN THỊ
+// ===== RENDER =====
 function render(){
   let tim = document.getElementById("tim").value.toLowerCase();
   let loc = document.getElementById("locNha").value;
@@ -133,21 +135,27 @@ function render(){
 
   data.forEach((r,i)=>{
 
-    if(tim && !r.hoten.toLowerCase().includes(tim)) return;
-    if(loc && r.nha != loc) return;
+    let hoten = r.hoten || "";
+    let namsinh = r.namsinh || "";
+    let nha = r.nha || "";
+    let thuoc = r.thuoc || "";
+    let ngay = r.ngaytaikham || "";
+
+    if(tim && !hoten.toLowerCase().includes(tim)) return;
+    if(loc && nha != loc) return;
 
     html += `
     <tr>
       <td>${stt++}</td>
-      <td><input value="${r.hoten || ""}" id="ht${i}"></td>
-      <td><input value="${r.namsinh || ""}" id="ns${i}"></td>
-      <td><input value="${r.nha || ""}" id="nha${i}"></td>
+      <td><input value="${hoten}" id="ht${i}"></td>
+      <td><input value="${namsinh}" id="ns${i}"></td>
+      <td><input value="${nha}" id="nha${i}"></td>
 
       <td>
-        <input type="date" id="ngay${i}" value="${fixDateInput(r.ngay)}">
+        <input type="date" id="ngay${i}" value="${fixDateInput(ngay)}">
       </td>
 
-      <td><input value="${r.thuoc || ""}" id="thuoc${i}"></td>
+      <td><input value="${thuoc}" id="thuoc${i}"></td>
 
       <td><button onclick="luu(${i})">💾</button></td>
       <td><button onclick="xoa(${i})">❌</button></td>
@@ -157,15 +165,14 @@ function render(){
   document.getElementById("bang").innerHTML = html;
 }
 
-// THÊM
+// ===== THÊM =====
 async function them(){
   let obj = {
-    action: "add",
     hoten: hoten.value,
     namsinh: namsinh.value,
     nha: nha.value,
     thuoc: thuoc.value,
-    ngay: ngay.value
+    ngaytaikham: ngay.value
   };
 
   await fetch(API,{
@@ -183,16 +190,15 @@ async function them(){
   load();
 }
 
-// SỬA
+// ===== SỬA =====
 async function luu(i){
   let obj = {
-    action:"update",
     index: i,
     hoten: document.getElementById("ht"+i).value,
     namsinh: document.getElementById("ns"+i).value,
     nha: document.getElementById("nha"+i).value,
     thuoc: document.getElementById("thuoc"+i).value,
-    ngay: document.getElementById("ngay"+i).value
+    ngaytaikham: document.getElementById("ngay"+i).value
   };
 
   await fetch(API,{
@@ -203,7 +209,7 @@ async function luu(i){
   load();
 }
 
-// XÓA (FIX CHUẨN)
+// ===== XÓA =====
 async function xoa(i){
   if(!confirm("Xóa dòng này?")) return;
 
@@ -218,7 +224,7 @@ async function xoa(i){
   load();
 }
 
-// CHECKBOX NHÀ
+// ===== CHECKBOX =====
 function taoChonNha(){
   let html="";
   for(let i=1;i<=9;i++){
@@ -227,7 +233,7 @@ function taoChonNha(){
   document.getElementById("chonNha").innerHTML = html;
 }
 
-// IN
+// ===== IN =====
 function inDanhSach(){
   let checked = document.querySelectorAll("#chonNha input:checked");
   let arr = [...checked].map(x=>x.value);
@@ -261,10 +267,10 @@ if(arr.length && !arr.includes(r.nha)) return;
 html += `
 <tr>
   <td>${stt++}</td>
-  <td>${r.hoten}</td>
-  <td>${r.namsinh}</td>
-  <td>${r.nha}</td>
-  <td>${formatDate(r.ngay)}</td>
+  <td>${r.hoten || ""}</td>
+  <td>${r.namsinh || ""}</td>
+  <td>${r.nha || ""}</td>
+  <td>${formatDate(r.ngaytaikham)}</td>
 </tr>`;
 ```
 
