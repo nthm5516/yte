@@ -86,14 +86,22 @@ const API = "https://script.google.com/macros/s/AKfycbwV3J7HxsAyTltoElDYGssVlYRe
 
 let data = [];
 
-// FIX DATE CHO INPUT
+// FIX DATE CHUẨN CHO INPUT
 function fixDateInput(d){
   if(!d) return "";
+
+  // nếu đã đúng format thì trả luôn
+  if(typeof d === "string" && d.includes("-") && d.length >= 10){
+    return d.substring(0,10);
+  }
+
   let x = new Date(d);
   if(isNaN(x)) return "";
+
   let year = x.getFullYear();
   let month = ("0"+(x.getMonth()+1)).slice(-2);
   let day = ("0"+x.getDate()).slice(-2);
+
   return `${year}-${month}-${day}`;
 }
 
@@ -108,7 +116,7 @@ function formatDate(d){
   return `${day}/${month}/${year}`;
 }
 
-// LOAD DATA
+// LOAD
 async function load(){
   let res = await fetch(API);
   data = await res.json();
@@ -131,15 +139,15 @@ function render(){
     html += `
     <tr>
       <td>${stt++}</td>
-      <td><input value="${r.hoten}" id="ht${i}"></td>
-      <td><input value="${r.namsinh}" id="ns${i}"></td>
-      <td><input value="${r.nha}" id="nha${i}"></td>
+      <td><input value="${r.hoten || ""}" id="ht${i}"></td>
+      <td><input value="${r.namsinh || ""}" id="ns${i}"></td>
+      <td><input value="${r.nha || ""}" id="nha${i}"></td>
 
       <td>
         <input type="date" id="ngay${i}" value="${fixDateInput(r.ngay)}">
       </td>
 
-      <td><input value="${r.thuoc}" id="thuoc${i}"></td>
+      <td><input value="${r.thuoc || ""}" id="thuoc${i}"></td>
 
       <td><button onclick="luu(${i})">💾</button></td>
       <td><button onclick="xoa(${i})">❌</button></td>
@@ -152,6 +160,7 @@ function render(){
 // THÊM
 async function them(){
   let obj = {
+    action: "add",
     hoten: hoten.value,
     namsinh: namsinh.value,
     nha: nha.value,
@@ -177,6 +186,7 @@ async function them(){
 // SỬA
 async function luu(i){
   let obj = {
+    action:"update",
     index: i,
     hoten: document.getElementById("ht"+i).value,
     namsinh: document.getElementById("ns"+i).value,
@@ -193,7 +203,7 @@ async function luu(i){
   load();
 }
 
-// XÓA
+// XÓA (FIX CHUẨN)
 async function xoa(i){
   if(!confirm("Xóa dòng này?")) return;
 
