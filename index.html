@@ -9,11 +9,27 @@
 body{font-family:Arial;padding:20px}
 h2{text-align:center}
 
-input,select,button{padding:6px;margin:5px}
+input,select,button{
+  padding:6px;
+  margin:5px;
+}
 
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#2f6ea3;color:white}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:center;
+}
+
+th{
+  background:#2f6ea3;
+  color:white;
+}
 </style>
 
 </head>
@@ -22,13 +38,19 @@ th{background:#2f6ea3;color:white}
 
 <h2>DANH SÁCH UỐNG THUỐC</h2>
 
+<!-- INPUT -->
+
 <input id="hoten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
-<input id="nha" placeholder="Nhà">
+<input id="nha" placeholder="Nhà (1-9)">
 <input id="thuoc" placeholder="Thuốc">
 <input type="date" id="ngay">
 
 <button onclick="them()">Thêm</button>
+
+<br>
+
+<input id="timten" placeholder="🔍 Tìm tên..." onkeyup="load()">
 
 <select id="locNha" onchange="load()">
   <option value="">Tất cả nhà</option>
@@ -38,6 +60,8 @@ th{background:#2f6ea3;color:white}
 </select>
 
 <button onclick="inDanhSach()">🖨 In</button>
+
+<!-- TABLE -->
 
 <table>
 <thead>
@@ -50,6 +74,7 @@ th{background:#2f6ea3;color:white}
 <th>Thuốc</th>
 </tr>
 </thead>
+
 <tbody id="bang"></tbody>
 </table>
 
@@ -57,6 +82,7 @@ th{background:#2f6ea3;color:white}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// 🔥 config Firebase của chị
 const firebaseConfig = {
   apiKey: "AIzaSyDpuS7LUymdqr--QKtg1zmQpUEH2osuPj4",
   authDomain: "thuoctamthan-df187.firebaseapp.com",
@@ -66,12 +92,15 @@ const firebaseConfig = {
   appId: "1:796983672732:web:bb34f8b0e15b0981455259"
 };
 
+// init
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// LOAD
+// ===== LOAD DATA =====
 async function load() {
-  const loc = document.getElementById("locNha").value;
+  const locNha = document.getElementById("locNha").value;
+  const tim = document.getElementById("timten").value.toLowerCase();
+
   const querySnapshot = await getDocs(collection(db, "benhnhan"));
 
   let html = "";
@@ -80,7 +109,11 @@ async function load() {
   querySnapshot.forEach((doc) => {
     const r = doc.data();
 
-    if (loc && r.nha != loc) return;
+    // lọc nhà
+    if (locNha && r.nha != locNha) return;
+
+    // tìm tên
+    if (tim && !r.hoten.toLowerCase().includes(tim)) return;
 
     html += `
       <tr>
@@ -97,7 +130,7 @@ async function load() {
   document.getElementById("bang").innerHTML = html;
 }
 
-// ADD
+// ===== ADD =====
 window.them = async function () {
   await addDoc(collection(db, "benhnhan"), {
     hoten: document.getElementById("hoten").value,
@@ -111,19 +144,23 @@ window.them = async function () {
   load();
 };
 
-// IN (chỉ 4 cột)
+// ===== IN =====
 window.inDanhSach = function () {
+  const locNha = document.getElementById("locNha").value;
   const rows = document.querySelectorAll("#bang tr");
 
   let html = `
-  <h2 style="text-align:center">DANH SÁCH UỐNG THUỐC</h2>
+  <h2 style="text-align:center">
+    DANH SÁCH UỐNG THUỐC ${locNha ? "(Nhà " + locNha + ")" : ""}
+  </h2>
+
   <table border="1" style="width:100%;border-collapse:collapse">
-  <tr>
-  <th>STT</th>
-  <th>Họ tên</th>
-  <th>Năm sinh</th>
-  <th>Ngày tái khám</th>
-  </tr>
+    <tr>
+      <th>STT</th>
+      <th>Họ tên</th>
+      <th>Năm sinh</th>
+      <th>Ngày tái khám</th>
+    </tr>
   `;
 
   rows.forEach(tr=>{
@@ -131,10 +168,10 @@ window.inDanhSach = function () {
 
     html += `
     <tr>
-    <td>${td[0].innerText}</td>
-    <td>${td[1].innerText}</td>
-    <td>${td[2].innerText}</td>
-    <td>${td[4].innerText}</td>
+      <td>${td[0].innerText}</td>
+      <td>${td[1].innerText}</td>
+      <td>${td[2].innerText}</td>
+      <td>${td[4].innerText}</td>
     </tr>
     `;
   });
@@ -146,6 +183,7 @@ window.inDanhSach = function () {
   win.print();
 };
 
+// chạy khi mở
 load();
 </script>
 
