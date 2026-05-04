@@ -1,45 +1,40 @@
 <!DOCTYPE html>
-
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <title>DANH SÁCH UỐNG THUỐC</title>
 
 <style>
-body{font-family:Arial;padding:20px}
-h2{text-align:center}
-
-input,select,button{
-  padding:6px;
-  margin:5px;
+body{
+    font-family: Arial;
+    text-align:center;
 }
-
+input, select, button{
+    padding:6px;
+    margin:4px;
+}
 table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
 }
-
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
-  text-align:center;
-}
-
 th{
-  background:#2f6ea3;
-  color:white;
+    background:#2f6fa3;
+    color:white;
+    padding:8px;
+}
+td{
+    border:1px solid #ccc;
+    padding:6px;
 }
 </style>
-
 </head>
 
 <body>
 
 <h2>DANH SÁCH UỐNG THUỐC</h2>
 
-<!-- INPUT -->
-
+<!-- FORM -->
 <input id="hoten" placeholder="Họ tên">
 <input id="namsinh" placeholder="Năm sinh">
 <input id="nha" placeholder="Nhà (1-9)">
@@ -50,19 +45,25 @@ th{
 
 <br>
 
+<!-- TÌM + LỌC -->
 <input id="timten" placeholder="🔍 Tìm tên..." onkeyup="load()">
 
 <select id="locNha" onchange="load()">
-  <option value="">Tất cả nhà</option>
-  <option>1</option><option>2</option><option>3</option>
-  <option>4</option><option>5</option><option>6</option>
-  <option>7</option><option>8</option><option>9</option>
+    <option value="">🏠 Tất cả nhà</option>
+    <option value="1">Nhà 1</option>
+    <option value="2">Nhà 2</option>
+    <option value="3">Nhà 3</option>
+    <option value="4">Nhà 4</option>
+    <option value="5">Nhà 5</option>
+    <option value="6">Nhà 6</option>
+    <option value="7">Nhà 7</option>
+    <option value="8">Nhà 8</option>
+    <option value="9">Nhà 9</option>
 </select>
 
 <button onclick="inDanhSach()">🖨 In</button>
 
 <!-- TABLE -->
-
 <table>
 <thead>
 <tr>
@@ -72,138 +73,152 @@ th{
 <th>Nhà</th>
 <th>Ngày tái khám</th>
 <th>Thuốc</th>
+<th>Xóa</th>
 </tr>
 </thead>
 
 <tbody id="bang"></tbody>
 </table>
 
+<!-- FIREBASE -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase config
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc,
+  getDocs, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDpuS7LUymdqr--QKtg1zmQpUEH2osuPj4",
+  apiKey: "AIzaSy...",
   authDomain: "thuoctamthan-df187.firebaseapp.com",
   projectId: "thuoctamthan-df187",
-  storageBucket: "thuoctamthan-df187.firebasestorage.app",
+  storageBucket: "thuoctamthan-df187.appspot.com",
   messagingSenderId: "796983672732",
-  appId: "1:796983672732:web:bb34f8b0e15b0981455259"
+  appId: "1:796983672732:web:xxx"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let data = [];
+
+
 // LOAD DATA
-async function load() {
-  const locNha = document.getElementById("locNha").value;
-  const tim = document.getElementById("timten").value.toLowerCase();
+async function load(){
+    const snap = await getDocs(collection(db,"benhnhan"));
+    data = [];
 
-  const querySnapshot = await getDocs(collection(db, "benhnhan"));
+    snap.forEach(doc=>{
+        data.push({id:doc.id,...doc.data()});
+    });
 
-  let html = "";
-  let stt = 1;
+    render();
+}
 
-  querySnapshot.forEach((doc) => {
-    const r = doc.data();
 
-    if (locNha && r.nha != locNha) return;
-    if (tim && !r.hoten.toLowerCase().includes(tim)) return;
+// RENDER
+function render(){
+    let html="";
+    let stt=1;
 
-    html += `
-      <tr>
+    let tim = document.getElementById("timten").value.toLowerCase();
+    let locNha = document.getElementById("locNha").value;
+
+    data.forEach(r=>{
+
+        // lọc tên
+        if(tim && !r.hoten.toLowerCase().includes(tim)) return;
+
+        // lọc nhà (FIX CHUẨN)
+        if(locNha && String(r.nha).trim() !== locNha) return;
+
+        html+=`
+        <tr>
         <td>${stt++}</td>
         <td>${r.hoten||""}</td>
         <td>${r.namsinh||""}</td>
         <td>${r.nha||""}</td>
         <td>${r.ngaytaikham||""}</td>
         <td>${r.thuoc||""}</td>
-      </tr>
-    `;
-  });
+        <td><button onclick="xoa('${r.id}')">X</button></td>
+        </tr>
+        `;
+    });
 
-  document.getElementById("bang").innerHTML = html;
+    document.getElementById("bang").innerHTML=html;
 }
 
-// ADD DATA
-window.them = async function () {
-  await addDoc(collection(db, "benhnhan"), {
-    hoten: document.getElementById("hoten").value,
-    namsinh: document.getElementById("namsinh").value,
-    nha: document.getElementById("nha").value,
-    thuoc: document.getElementById("thuoc").value,
-    ngaytaikham: document.getElementById("ngay").value
-  });
 
-  alert("Đã lưu!");
-  load();
-};
+// THÊM
+async function them(){
+    let hoten = document.getElementById("hoten").value;
+    let namsinh = document.getElementById("namsinh").value;
+    let nha = document.getElementById("nha").value;
+    let thuoc = document.getElementById("thuoc").value;
+    let ngay = document.getElementById("ngay").value;
+
+    await addDoc(collection(db,"benhnhan"),{
+        hoten,namsinh,nha,thuoc,ngaytaikham:ngay
+    });
+
+    load();
+}
+
+
+// XOÁ
+async function xoa(id){
+    await deleteDoc(doc(db,"benhnhan",id));
+    load();
+}
+
 
 // IN
-window.inDanhSach = function () {
-  const locNha = document.getElementById("locNha").value;
-  const rows = document.querySelectorAll("#bang tr");
+function inDanhSach(){
 
-  let html = `
-  <h2 style="text-align:center">
-    DANH SÁCH UỐNG THUỐC ${locNha ? "(Nhà " + locNha + ")" : ""}
-  </h2>
+    let locNha = document.getElementById("locNha").value;
+    let tim = document.getElementById("timten").value.toLowerCase();
 
-  <table border="1" style="width:100%;border-collapse:collapse">
+    let html = `
+    <h3 style="text-align:center">DANH SÁCH UỐNG THUỐC</h3>
+    <table border="1" style="width:100%;border-collapse:collapse;text-align:center">
     <tr>
-      <th>STT</th>
-      <th>Họ tên</th>
-      <th>Năm sinh</th>
-      <th>Nhà</th>
-      <th>Ngày tái khám</th>
+    <th>STT</th>
+    <th>Họ tên</th>
+    <th>Năm sinh</th>
+    <th>Nhà</th>
+    <th>Ngày tái khám</th>
     </tr>
-  `;
+    `;
 
-  rows.forEach(tr=>{
-    const td = tr.querySelectorAll("td");
+    let stt=1;
 
-    if(td.length>0){
-      html += `
-      <tr>
-        <td>${td[0].innerText}</td>
-        <td style="text-align:left;padding-left:10px">${td[1].innerText}</td>
-        <td>${td[2].innerText}</td>
-        <td>${td[3].innerText}</td>
-        <td>${td[4].innerText}</td>
-      </tr>
-      `;
-    }
-  });
+    data.forEach(r=>{
 
-  html += "</table>";
+        if(tim && !r.hoten.toLowerCase().includes(tim)) return;
+        if(locNha && String(r.nha).trim() !== locNha) return;
 
-  let win = window.open("");
-  win.document.write(`
-    <html>
-    <head>
-      <title>In</title>
-      <style>
-        body{font-family:Arial;padding:20px}
-        table{width:100%;border-collapse:collapse}
-        th,td{border:1px solid #000;padding:8px;text-align:center}
-        th{background:#ddd}
-      </style>
+        html+=`
+        <tr>
+        <td>${stt++}</td>
+        <td>${r.hoten||""}</td>
+        <td>${r.namsinh||""}</td>
+        <td>${r.nha||""}</td>
+        <td>${r.ngaytaikham||""}</td>
+        </tr>
+        `;
+    });
 
-```
-</head>
-<body>${html}</body>
-</html>
-```
+    html+="</table>";
 
-`);
+    let w=window.open("");
+    w.document.write(html);
+    w.print();
+}
 
-win.document.close();
-win.print();
-};
+load();
 
-// chạy khi mở
-load(); </script>
+</script>
 
 </body>
 </html>
